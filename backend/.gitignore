@@ -1,0 +1,40 @@
+# Node modules
+node_modules/
+
+# Build output
+/dist/
+/build/
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.*
+
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE settings
+.vscode/
+
+# Temporary files
+*.swp
+*.swo
+
+# Database files (e.g., if using SQLite)
+*.sqlite
+*.db
+
+# Secrets and sensitive files (e.g., private keys, certificates)
+*.pem
+*.key
+*.crt
+
+# API keys (if stored locally)
+keys/
+*.env
