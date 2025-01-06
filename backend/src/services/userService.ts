@@ -29,6 +29,7 @@ export const getUserProfileService = async (userId: number) => {
                 bio: true,
                 profilePicture: true,
                 website: true,
+                userID: true,
                 posts: { // Include user's posts
                     select: {
                         id: true,
@@ -52,4 +53,28 @@ export const getUserProfileService = async (userId: number) => {
     } catch (error) {
         throw new Error('Failed to fetch user data');
     }
+};
+
+export const searchUsers = async (searchTerm: string) => {
+  try {
+    // Search for users by username or userID using the search term
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { username: { contains: searchTerm, mode: 'insensitive' } },
+          { userID: { contains: searchTerm, mode: 'insensitive' } },
+        ],
+      },
+      select: {
+        id: true,
+        username: true,
+        profilePicture: true,
+        userID: true,
+      },
+    });
+
+    return users;
+  } catch (error) {
+    throw new Error('Failed to search for users');
+  }
 };

@@ -1,6 +1,6 @@
 // userController.ts
 import { Request, Response } from 'express';
-import { updateProfilePicture, getUserProfileService } from '../services/userService';
+import { updateProfilePicture, getUserProfileService, searchUsers } from '../services/userService';
 
 export const updateUserProfilePicture = async (req: Request, res: Response) => {
     const { userId } = req.body; // Retrieve userId from the request body
@@ -52,3 +52,23 @@ export const getUserProfile = async (req: Request, res: Response) => {
       res.status(500).json({ error: 'Failed to fetch user data' });
     }
   };
+
+  // Controller function for searching users
+export const searchUsersController = async (req: Request, res: Response) => {
+  const { searchTerm } = req.query;  // Get search term from query params
+
+  if (!searchTerm) {
+    res.status(400).json({ error: 'Search term is required' });
+    return
+  }
+
+  try {
+    const users = await searchUsers(searchTerm as string);  // Call the service function
+
+    // Return the search results
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error searching for users:', error);
+    res.status(500).json({ error: 'Failed to search for users' });
+  }
+};

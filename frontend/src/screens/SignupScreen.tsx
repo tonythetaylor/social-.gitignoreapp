@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-
-const apiUrl = process.env.REACT_APP_API_URL;
 
 const SignupScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
@@ -19,13 +16,16 @@ const SignupScreen = ({ navigation }: any) => {
         password,
         username,
       });
-
-      // Save the token returned from signup (if returned)
-      await SecureStore.setItemAsync('authToken', response.data.token);
-
-      // Navigate to the Home screen after successful signup
-      navigation.navigate('Home');
-    } catch (err) {
+  
+      if (response.data.message === 'User created successfully') {
+        // On success, navigate to the Login screen
+        navigation.navigate('Login');
+      } else {
+        // If there's a problem, show the error message
+        setError('Signup failed. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Signup error: ', err); // Log the error details
       setError('Signup failed. Please try again.');
     }
   };

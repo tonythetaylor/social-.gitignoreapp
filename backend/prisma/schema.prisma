@@ -15,6 +15,7 @@ model User {
   profilePicture String?  // Nullable field for the profile picture URL
   bio           String?  // Nullable bio field
   website       String?  // Nullable website URL field
+  userID        String   @unique // Unique identifier for searching users
   posts         Post[]
   friends       User[]   @relation("UserFriends")
   friendOf      User[]   @relation("UserFriends")
