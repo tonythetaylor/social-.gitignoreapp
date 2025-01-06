@@ -24,7 +24,7 @@ const PostScreen = () => {
   // Function to launch the image picker
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 1,
     });
@@ -58,7 +58,7 @@ const PostScreen = () => {
 
     try {
       // Send form data to the server
-      const response = await axios.post(`http://192.168.1.30:3005/posts`, formData, {
+      const response = await axios.post(`http://10.0.0.151:3005/posts`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',

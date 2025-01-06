@@ -15,7 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 
-const apiUrl = "http://192.168.1.30:3005";
+const apiUrl = "http://10.0.0.151:3005";
 
 const ProfileScreen = () => {
   const [user, setUser] = useState<any>();

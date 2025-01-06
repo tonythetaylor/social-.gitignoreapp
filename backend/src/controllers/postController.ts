@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createPost, getPosts } from '../services/postService';
+import { createPost, getPosts, updatePost } from '../services/postService';
 import { User } from '@prisma/client';  // Assuming you're using Prisma's User model
 import { Post } from '@prisma/client';  // Assuming you want to return the Post type
 import path from 'path';
@@ -68,5 +68,39 @@ export const fetchPosts = async (req: Request, res: Response): Promise<void> => 
   } catch (error) {
     console.error('Error fetching posts:', error);
     res.status(500).json({ message: 'Error fetching posts' });
+  }
+};
+
+// Controller to handle updating a post
+// Controller function to update a post by ID
+export const update = async (req: Request, res: Response): Promise<void> => {
+  const { postId } = req.params;  // Retrieve postId from URL parameters
+  const { content } = req.body;   // Retrieve new content from request body
+  
+  // Check if content is provided
+  if (!content) {
+    res.status(400).json({ message: 'Content is required to update the post' });
+    return;
+  }
+
+  try {
+    // Get the user from the request (Assumes authentication middleware sets req.user)
+    const user = req.user as { id: number };
+
+    // Call the service function to update the post
+    const updatedPost = await updatePost(user.id, Number(postId), content);
+
+    // If the post wasn't found or the user is not the owner, return 403
+    if (!updatedPost) {
+       res.status(403).json({ message: 'Unauthorized to update this post' });
+       return
+    }
+
+    // Respond with the updated post
+    res.status(200).json(updatedPost);
+
+  } catch (error) {
+    console.error('Error updating post:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };

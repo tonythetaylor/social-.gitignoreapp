@@ -1,29 +1,43 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import React, { useState } from "react";
+import {
+  View,
+  TextInput,
+  Button,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
 const LoginScreen = ({ navigation }: any) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-console.log(apiUrl)
+  // Default email and password for testing
+  const defaultEmail = "user@example.com";
+  const defaultPassword = "password123";
+
+  const [email, setEmail] = useState(defaultEmail); // Set default email
+  const [password, setPassword] = useState(defaultPassword); // Set default password
+  const [error, setError] = useState("");
+ 
   const handleLogin = async () => {
     try {
-      const response = await axios.post(`http://192.168.1.30:3005/auth/login`, { email, password });
-      await SecureStore.setItemAsync('authToken', response.data.token); // Store token securely
-      navigation.navigate('Home');
+      const response = await axios.post(`http://10.0.0.151:3005/auth/login`, {
+        email,
+        password,
+      });
+      await SecureStore.setItemAsync("authToken", response.data.token); // Store token securely
+      navigation.navigate("Home");
     } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      setError("Login failed. Please check your credentials.");
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      
+
       {/* Email input */}
       <TextInput
         style={styles.input}
@@ -55,7 +69,7 @@ console.log(apiUrl)
       {/* Sign up link */}
       <View style={styles.signUpContainer}>
         <Text style={styles.signUpText}>Don't have an account?</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+        <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
           <Text style={styles.signUpLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
@@ -66,57 +80,57 @@ console.log(apiUrl)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
-    color: '#333',
+    color: "#333",
   },
   input: {
-    width: '100%',
+    width: "100%",
     padding: 12,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 6,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   error: {
-    color: 'red',
+    color: "red",
     marginBottom: 15,
     fontSize: 14,
   },
   button: {
-    width: '100%',
+    width: "100%",
     padding: 15,
-    backgroundColor: '#007bff',
+    backgroundColor: "#007bff",
     borderRadius: 6,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   signUpContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   signUpText: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   signUpLink: {
     fontSize: 14,
-    color: '#007bff',
-    fontWeight: 'bold',
+    color: "#007bff",
+    fontWeight: "bold",
   },
 });
 

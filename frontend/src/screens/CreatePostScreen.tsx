@@ -17,7 +17,7 @@ import * as SecureStore from "expo-secure-store";
 import Icon from "react-native-vector-icons/Feather";
 import { useGiphySearch } from "../hooks/useGiphySearch";
 
-const apiUrl = process.env.REACT_APP_API_URL || "http://192.168.1.30:3005";
+const apiUrl = process.env.REACT_APP_API_URL || "http://10.0.0.151:3005";
 
 const CreatePostScreen = ({ navigation }: any) => {
   const [content, setContent] = useState("");

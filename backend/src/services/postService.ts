@@ -13,7 +13,7 @@ export const createPost = async (userId: number, content: string, imageUrl: stri
   });
 };
 
-// Service method to fetch posts with pagination
+// Service method to fetch posts with pagination and user data
 export const getPosts = async (page: number, limit: number) => {
   const offset = (page - 1) * limit;  // Calculate offset based on page and limit
 
@@ -23,9 +23,38 @@ export const getPosts = async (page: number, limit: number) => {
     orderBy: {
       createdAt: 'desc',  // Order posts by creation date (newest first)
     },
+    include: {
+      user: {
+        select: {
+          username: true,
+          profilePicture: true,
+        },
+      },
+    },
   });
 
   const totalPosts = await prisma.post.count();  // Count the total number of posts in the database
 
   return { posts, totalPosts };  // Return posts and the total number of posts for pagination
+};
+
+// Service method to update a post
+export const updatePost = async (userId: number, postId: number, content: string): Promise<Post | null> => {
+  // Find the post by ID
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+  });
+
+  // If the post doesn't exist or the user is not the owner, return null
+  if (!post || post.userId !== userId) {
+    return null; // User is not the owner or post does not exist
+  }
+
+  // Update the post content
+  return await prisma.post.update({
+    where: { id: postId },
+    data: {
+      content,  // Update the content
+    },
+  });
 };
