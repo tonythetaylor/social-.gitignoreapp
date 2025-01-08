@@ -7,6 +7,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import userRoutes from './routes/userRoutes';
+import followRoutes from "./routes/followRoutes";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -17,7 +18,7 @@ const apiUrl = process.env.API_URL;
 
 const app = express();
 const corsOptions = {
-  origin: ['http://localhost:3000', 'exp://10.0.0.151:8081', 'http://192.168.1.55'],  // Add mobile IP here
+  origin: ['http://localhost:3000', 'exp://192.168.1.30:8081', 'http://192.168.1.55'],  // Add mobile IP here
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,  // If you're using cookies or sessions
 };
@@ -28,6 +29,8 @@ app.use('/auth', authRoutes);
 app.use('/posts', postRoutes);
 app.use('/friends', friendRoutes);
 app.use('/user', userRoutes);
+app.use("/follow", followRoutes);
+
 
 // Serve static files from the 'uploads' folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

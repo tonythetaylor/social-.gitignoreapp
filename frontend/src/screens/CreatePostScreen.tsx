@@ -17,7 +17,8 @@ import * as SecureStore from "expo-secure-store";
 import Icon from "react-native-vector-icons/Feather";
 import { useGiphySearch } from "../hooks/useGiphySearch";
 
-const apiUrl = process.env.REACT_APP_API_URL || "http://10.0.0.151:3005";
+// Replace with your own API URL
+const apiUrl = process.env.REACT_APP_API_URL || "http://192.168.1.30:3005";
 
 const CreatePostScreen = ({ navigation }: any) => {
   const [content, setContent] = useState("");
@@ -26,9 +27,11 @@ const CreatePostScreen = ({ navigation }: any) => {
   const [selectedGif, setSelectedGif] = useState<any>(null);
   const [isGifModalVisible, setIsGifModalVisible] = useState(false);
 
-  const { searchQuery, setSearchQuery, gifResults, isLoading, searchGifs } = useGiphySearch();
+  // Giphy search hook
+  const { searchQuery, setSearchQuery, gifResults, isLoading, searchGifs } =
+    useGiphySearch();
 
-  // Function to launch the image picker
+  // Launch image picker
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -44,7 +47,7 @@ const CreatePostScreen = ({ navigation }: any) => {
   // Convert image URI to Blob
   const createBlob = async (uri: string) => {
     const response = await fetch(uri);
-    return await response.blob();
+    return response.blob();
   };
 
   // Handle post submission
@@ -58,34 +61,47 @@ const CreatePostScreen = ({ navigation }: any) => {
     const formData = new FormData();
     formData.append("content", content);
 
-    // Handle image upload
+    // If user picked an image
     if (image) {
       const blob = await createBlob(image);
-      const file = { uri: image, type: "image/jpeg", name: "post-image.jpg" };
+      const file = {
+        uri: image,
+        type: "image/jpeg",
+        name: "post-image.jpg",
+      };
       formData.append("image", file as any);
     }
 
-    // Handle GIF upload
+    // If user picked a GIF
     if (selectedGif) {
-      const gifFile = { uri: selectedGif.images.original.url, type: "image/gif", name: "post-gif.gif" };
+      const gifFile = {
+        uri: selectedGif.images.original.url,
+        type: "image/gif",
+        name: "post-gif.gif",
+      };
       formData.append("gif", gifFile as any);
     }
 
     try {
-      const response = await axios.post(`${apiUrl}/posts/create`, formData, {
+      await axios.post(`${apiUrl}/posts/create`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
-      setContent(""); setImage(null); setSelectedGif(null); setError(""); navigation.goBack();
+      // Clear everything and go back
+      setContent("");
+      setImage(null);
+      setSelectedGif(null);
+      setError("");
+      navigation.goBack();
     } catch (err) {
       setError("Failed to create post.");
       console.error(err);
     }
   };
 
-  // Function to clear the image or GIF preview
+  // Clear any selected image/GIF
   const clearMedia = () => {
     setImage(null);
     setSelectedGif(null);
@@ -94,6 +110,7 @@ const CreatePostScreen = ({ navigation }: any) => {
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <View style={styles.container}>
+        {/* Post content input */}
         <TextInput
           style={styles.input}
           placeholder="What's on your mind?"
@@ -103,31 +120,36 @@ const CreatePostScreen = ({ navigation }: any) => {
           maxLength={280}
         />
 
-        {/* Container for Image and GIF Buttons inside the TextInput area */}
+        {/* Container for the image/GIF buttons */}
         <View style={styles.inputContainer}>
           <TouchableOpacity style={styles.iconButton} onPress={pickImage}>
             <Icon name="image" size={24} color="#007bff" />
           </TouchableOpacity>
 
+          {/* Replaced camera icon with a gift (present) icon */}
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => setIsGifModalVisible(true)}
           >
-            <Icon name="camera" size={24} color="#007bff" />
+            <Icon name="gift" size={24} color="#007bff" />
           </TouchableOpacity>
         </View>
 
-        {/* Display selected image */}
+        {/* Selected image preview */}
         {image && (
           <View style={styles.previewContainer}>
-            <Image source={{ uri: image }} style={styles.selectedImage} resizeMode="contain" />
+            <Image
+              source={{ uri: image }}
+              style={styles.selectedImage}
+              resizeMode="contain"
+            />
             <TouchableOpacity onPress={clearMedia} style={styles.clearButton}>
               <Text style={styles.clearButtonText}>Clear</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* Display selected GIF */}
+        {/* Selected GIF preview */}
         {selectedGif && (
           <View style={styles.previewContainer}>
             <Image
@@ -141,16 +163,20 @@ const CreatePostScreen = ({ navigation }: any) => {
           </View>
         )}
 
-        {/* Error Message */}
+        {/* Error message */}
         {error && <Text style={styles.error}>{error}</Text>}
 
-        {/* Post Button */}
+        {/* Submit (Post) button */}
         <TouchableOpacity style={styles.submitButton} onPress={handlePost}>
           <Text style={styles.submitButtonText}>Post</Text>
         </TouchableOpacity>
 
         {/* GIF Modal */}
-        <Modal visible={isGifModalVisible} animationType="slide" transparent={true}>
+        <Modal
+          visible={isGifModalVisible}
+          animationType="slide"
+          transparent={true}
+        >
           <TouchableWithoutFeedback onPress={() => setIsGifModalVisible(false)}>
             <View style={styles.modalContainer}>
               <View style={styles.modalContent}>
@@ -176,7 +202,9 @@ const CreatePostScreen = ({ navigation }: any) => {
                 ) : (
                   <>
                     {gifResults.length === 0 && !isLoading && (
-                      <Text style={styles.noResultsText}>No GIFs found. Try another search!</Text>
+                      <Text style={styles.noResultsText}>
+                        No GIFs found. Try another search!
+                      </Text>
                     )}
                     <FlatList
                       data={gifResults}
@@ -208,6 +236,8 @@ const CreatePostScreen = ({ navigation }: any) => {
     </TouchableWithoutFeedback>
   );
 };
+
+export default CreatePostScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -251,7 +281,7 @@ const styles = StyleSheet.create({
   },
   selectedImage: {
     width: "100%",
-    height: 250, // Ensures the image takes full height according to its aspect ratio
+    height: 250,
     borderRadius: 12,
   },
   selectedGif: {
@@ -339,5 +369,3 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-
-export default CreatePostScreen;

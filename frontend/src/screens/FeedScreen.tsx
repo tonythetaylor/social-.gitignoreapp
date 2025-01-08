@@ -29,7 +29,7 @@ import Icon from "react-native-vector-icons/Feather"; // Import icons
 import { getTimeAgo } from "../utils/getTimeAgo";
 import { getUserInfoFromToken } from "../utils/getUserFromToken";
 
-const apiUrl = "http://10.0.0.151:3005";
+const apiUrl = "http://192.168.1.30:3005";
 
 const FeedScreen = () => {
   const [posts, setPosts] = useState<any[]>([]);
@@ -362,6 +362,7 @@ const FeedScreen = () => {
           ListEmptyComponent={
             <Text style={styles.loadingText}>No posts available.</Text>
           }
+          showsVerticalScrollIndicator={false} // Hide the scroll bar
         />
 
         {/* Post Modal */}

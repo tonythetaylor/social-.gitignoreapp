@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,17 +10,31 @@ datasource db {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  password      String
-  username      String   @unique
-  profilePicture String?  // Nullable field for the profile picture URL
-  bio           String?  // Nullable bio field
-  website       String?  // Nullable website URL field
-  userID        String   @unique // Unique identifier for searching users
-  posts         Post[]
-  friends       User[]   @relation("UserFriends")
-  friendOf      User[]   @relation("UserFriends")
+  id                     Int                @id @default(autoincrement())
+  email                  String             @unique
+  password               String
+  username               String             @unique
+  profilePicture         String?
+  bio                    String?
+  website                String?
+  userID                 String             @unique
+  posts                  Post[]
+
+  // Self-relation: many-to-many for mutual friendships
+  friends                User[]             @relation("UserFriends")
+  friendOf               User[]             @relation("UserFriends")
+
+  // Friend Requests
+  friendRequestsSent     FriendRequest[]    @relation("SentRequests")
+  friendRequestsReceived FriendRequest[]    @relation("ReceivedRequests")
+
+  // Chat
+  sentMessages           ChatMessage[]      @relation("SenderMessages")
+  receivedMessages       ChatMessage[]      @relation("ReceiverMessages")
+
+  // Follows
+  followers              Follow[]           @relation("UserFollowers")
+  following              Follow[]           @relation("UserFollowing")
 }
 
 model Post {
@@ -31,10 +47,19 @@ model Post {
 }
 
 model FriendRequest {
-  id         Int    @id @default(autoincrement())
-  senderId   Int
-  receiverId Int
-  status     String // 'pending', 'accepted', 'rejected'
+  id          Int       @id @default(autoincrement())
+  senderId    Int
+  receiverId  Int
+  status      String
+  createdAt   DateTime  @default(now())
+
+  // Access toggles
+  chatEnabled  Boolean?
+  videoEnabled Boolean?
+  feedEnabled  Boolean?
+
+  sender    User @relation("SentRequests", fields: [senderId], references: [id])
+  receiver  User @relation("ReceivedRequests", fields: [receiverId], references: [id])
 }
 
 model ChatMessage {
@@ -43,4 +68,20 @@ model ChatMessage {
   receiverId Int
   message    String
   timestamp  DateTime @default(now())
+
+  sender     User     @relation("SenderMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceiverMessages", fields: [receiverId], references: [id])
+}
+
+model Follow {
+  id          Int       @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  status      String    @default("accepted")
+  createdAt   DateTime  @default(now())
+
+  follower    User      @relation("UserFollowing", fields: [followerId], references: [id])
+  following   User      @relation("UserFollowers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
 }

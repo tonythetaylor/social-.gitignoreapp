@@ -26,7 +26,7 @@ export const useGiphySearch = () => {
           params: {
             api_key: GIPHY_API_KEY,
             q: query,
-            limit: 10,  // Limit results
+            limit: 12,  // Limit results
           },
         }
       );

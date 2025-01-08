@@ -12,23 +12,20 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import Icon from "react-native-vector-icons/Feather"; // Importing icon library
+import Icon from "react-native-vector-icons/Feather";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
-import debounce from "lodash/debounce"; // Debounce for search requests
-import { BlurView } from "expo-blur"; // To create a blur effect
+import debounce from "lodash/debounce";
+import { BlurView } from "expo-blur";
 
 const SearchScreen = ({ navigation }: any) => {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [expandedUserID, setExpandedUserID] = useState<string | null>(null);
   const [error, setError] = useState("");
-
-  // For modal
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedUserID, setSelectedUserID] = useState<string | null>(null);
 
-  // State for toggles
   const [isCallEnabled, setIsCallEnabled] = useState(true);
   const [isMessageEnabled, setIsMessageEnabled] = useState(true);
 
@@ -37,21 +34,16 @@ const SearchScreen = ({ navigation }: any) => {
     if (query.length > 0) {
       try {
         const token = await SecureStore.getItemAsync("authToken");
-
         if (!token) {
           setError("No authentication token found");
           return;
         }
-
         const response = await axios.get(
-          `http://10.0.0.151:3005/user/search?searchTerm=${query}`,
+          `http://192.168.1.30:3005/user/search?searchTerm=${query}`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`, // Attach token in Authorization header
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
-
         if (response.data && response.data.length > 0) {
           setSearchResults(response.data);
         } else {
@@ -73,160 +65,217 @@ const SearchScreen = ({ navigation }: any) => {
   };
 
   const handleSearchButtonClick = () => {
-    handleSearch(); // Call the search function explicitly
+    handleSearch();
   };
 
   const handleClearInput = () => {
-    setQuery(""); // Clear the input
-    setSearchResults([]); // Clear search results
+    setQuery("");
+    setSearchResults([]);
     setError("");
   };
 
   const handleSearchSubmit = () => {
-    handleSearch(); // Trigger the search when the "return" key is pressed
+    handleSearch();
   };
 
   const toggleActions = (userID: string) => {
-    // Set selectedUserID and toggle modal visibility
     if (expandedUserID === userID) {
-      setExpandedUserID(null); // Close modal if the same user is clicked again
+      setExpandedUserID(null);
       setModalVisible(false);
     } else {
-      setExpandedUserID(userID); // Open modal for the selected user
+      setExpandedUserID(userID);
       setSelectedUserID(userID);
       setModalVisible(true);
     }
   };
 
   const toggleCallFeature = () => {
-    setIsCallEnabled(!isCallEnabled); // Toggle call feature
+    setIsCallEnabled(!isCallEnabled);
   };
 
   const toggleMessageFeature = () => {
-    setIsMessageEnabled(!isMessageEnabled); // Toggle message feature
+    setIsMessageEnabled(!isMessageEnabled);
   };
 
-  const renderItem = ({ item }: { item: any }) => {
-    return (
-      <View style={styles.userContainer}>
-        {/* Profile Picture */}
-        <Image
-          source={{
-            uri: item.profilePicture || "https://via.placeholder.com/150",
-          }}
-          style={styles.profileImage}
-        />
+  const checkIfAlreadyFriends = async (selectedUserID: string) => {
+    try {
+      const token = await SecureStore.getItemAsync("authToken");
 
-        {/* Username and user ID */}
-        <View style={styles.userInfo}>
-          <Text style={styles.username}>{item.username}</Text>
-          <Text style={styles.userID}>{item.userID}</Text>
-        </View>
+      if (!token) {
+        setError("No authentication token found");
+        return false;
+      }
 
-        {/* Icons for call, message, add friend */}
-        <View style={styles.iconsContainer}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Icon name="phone" size={24} color="#4CAF50" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Icon name="message-circle" size={24} color="#2196F3" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Icon name="user-plus" size={24} color="#FFC107" />
-          </TouchableOpacity>
-        </View>
+      const response = await axios.post(
+        `http://192.168.1.30:3005/friends/checkFriendStatus`,
+        { userId: selectedUserID },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-        {/* Ellipsis menu for additional actions */}
-        <TouchableOpacity
-          onPress={() => toggleActions(item.userID)}
-          style={styles.ellipsisButton}
-        >
-          <Icon name="more-vertical" size={24} color="#000" />
-        </TouchableOpacity>
+      const { isFriend } = response.data;
+      console.log("DEBUG: ", response.data);
+      return isFriend;
+    } catch (error) {
+      console.error("Error checking friend status:", error);
+      setError("Failed to check friendship status.");
+      return false;
+    }
+  };
 
-        {/* Show the modal */}
-        <Modal
-          visible={isModalVisible && selectedUserID === item.userID}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-            <View style={styles.modalOverlay}>
-              <BlurView intensity={50} style={styles.modalBlurBackground}>
-                <View style={styles.modalContainer}>
-                  {/* User Info Section */}
-                  <View style={styles.userCardHeader}>
-                    <Image
-                      source={{
-                        uri: item.profilePicture || "https://via.placeholder.com/150",
-                      }}
-                      style={styles.modalProfileImage}
-                    />
-                    <Text style={styles.modalUsername}>{item.username}</Text>
-                  </View>
+  const handleSendFriendRequest = async (selectedUserID: any) => {
+    const token = await SecureStore.getItemAsync("authToken");
+  
+    if (!token) {
+      setError("No authentication token found");
+      return;
+    }
+  
+    console.log('selectedUserID -> ', selectedUserID);
+  
+    if (!selectedUserID) {
+      setError("No user selected");
+      return;
+    }
+  
+    // Check if the user is already friends
+    const isAlreadyFriends = await checkIfAlreadyFriends(selectedUserID);
+  
+    // If already friends, stop further execution
+    if (isAlreadyFriends) {
+      alert("You are already friends with this user.");
+      return;
+    }
+  
+    // Proceed with sending the friend request if they are not friends yet
+    try {
+      const response = await axios.post(
+        `http://192.168.1.30:3005/friends/sendFriendRequest`,
+        { userID: selectedUserID },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Friend request sent successfully.");
+      setModalVisible(false); // Close the modal after sending the request
+    } catch (error) {
+      console.error("Error sending friend request: ", error);
+      alert("Failed to send friend request.");
+    }
+  };
 
-                  {/* Call and Message Feature Toggles */}
-                  <View style={styles.toggleButtonsContainer}>
-                    <TouchableOpacity
-                      style={styles.toggleButton}
-                      onPress={toggleCallFeature}
-                    >
-                      <Icon
-                        name={isCallEnabled ? "phone" : "phone-off"}
-                        size={24}
-                        color={isCallEnabled ? "#4CAF50" : "#B0B0B0"}
-                      />
-                      <Text style={styles.toggleText}>{isCallEnabled ? "Call Enabled" : "Call Disabled"}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.toggleButton}
-                      onPress={toggleMessageFeature}
-                    >
-                      <Icon
-                        name={isMessageEnabled ? "message-circle" : "message-square"}
-                        size={24}
-                        color={isMessageEnabled ? "#2196F3" : "#B0B0B0"}
-                      />
-                      <Text style={styles.toggleText}>{isMessageEnabled ? "Message Enabled" : "Message Disabled"}</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Horizontal line for separation */}
-                  <View style={styles.separator} />
-
-                  {/* Action buttons */}
-                  <FlatList
-                    data={[
-                      { title: "Mute", icon: "volume-x", color: "#FF9800" },
-                      { title: "Block", icon: "slash", color: "#f44336" },
-                      { title: "Report", icon: "flag", color: "#2196F3" },
-                    ]}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        style={styles.modalActionButton}
-                        onPress={() => alert(`${item.title} clicked`)}
-                      >
-                        <Icon name={item.icon} size={18} color={item.color} />
-                        <Text style={styles.modalActionText}>{item.title}</Text>
-                      </TouchableOpacity>
-                    )}
-                    keyExtractor={(item) => item.title}
-                  />
-                </View>
-              </BlurView>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
+  const renderItem = ({ item }: { item: any }) => (
+    <View style={styles.userContainer}>
+      <Image
+        source={{
+          uri: item.profilePicture || "https://via.placeholder.com/150",
+        }}
+        style={styles.profileImage}
+      />
+      <View style={styles.userInfo}>
+        <Text style={styles.username}>{item.username}</Text>
+        <Text style={styles.userID}>{item.userID}</Text>
       </View>
-    );
-  };
+
+      <View style={styles.iconsContainer}>
+        <TouchableOpacity style={styles.iconButton}>
+          <Icon name="phone" size={24} color="#4CAF50" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButton}>
+          <Icon name="message-circle" size={24} color="#2196F3" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => handleSendFriendRequest(item.id)}
+        >
+          <Icon name="user-plus" size={24} color="#FFC107" />
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity
+        onPress={() => toggleActions(item.userID)}
+        style={styles.ellipsisButton}
+      >
+        <Icon name="more-vertical" size={24} color="#000" />
+      </TouchableOpacity>
+
+      <Modal
+        visible={isModalVisible && selectedUserID === item.userID}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <BlurView intensity={50} style={styles.modalBlurBackground}>
+              <View style={styles.modalContainer}>
+                <View style={styles.userCardHeader}>
+                  <Image
+                    source={{
+                      uri: item.profilePicture || "https://via.placeholder.com/150",
+                    }}
+                    style={styles.modalProfileImage}
+                  />
+                  <Text style={styles.modalUsername}>{item.username}</Text>
+                </View>
+
+                <View style={styles.toggleButtonsContainer}>
+                  <TouchableOpacity
+                    style={styles.toggleButton}
+                    onPress={toggleCallFeature}
+                  >
+                    <Icon
+                      name={isCallEnabled ? "phone" : "phone-off"}
+                      size={24}
+                      color={isCallEnabled ? "#4CAF50" : "#B0B0B0"}
+                    />
+                    <Text style={styles.toggleText}>
+                      {isCallEnabled ? "Call Enabled" : "Call Disabled"}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.toggleButton}
+                    onPress={toggleMessageFeature}
+                  >
+                    <Icon
+                      name={isMessageEnabled ? "message-circle" : "message-square"}
+                      size={24}
+                      color={isMessageEnabled ? "#2196F3" : "#B0B0B0"}
+                    />
+                    <Text style={styles.toggleText}>
+                      {isMessageEnabled ? "Message Enabled" : "Message Disabled"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.separator} />
+
+                <FlatList
+                  data={[
+                    { title: "Mute", icon: "volume-x", color: "#FF9800" },
+                    { title: "Block", icon: "slash", color: "#f44336" },
+                    { title: "Report", icon: "flag", color: "#2196F3" },
+                  ]}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.modalActionButton}
+                      onPress={() => alert(`${item.title} clicked`)}
+                    >
+                      <Icon name={item.icon} size={18} color={item.color} />
+                      <Text style={styles.modalActionText}>{item.title}</Text>
+                    </TouchableOpacity>
+                  )}
+                  keyExtractor={(item) => item.title}
+                />
+              </View>
+            </BlurView>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    </View>
+  );
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.innerContainer}>
-          {/* Search Input with icons */}
           <View style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
@@ -237,7 +286,6 @@ const SearchScreen = ({ navigation }: any) => {
               returnKeyType="search"
             />
 
-            {/* Search or Clear button */}
             <TouchableOpacity
               style={styles.searchButton}
               onPress={
@@ -252,10 +300,8 @@ const SearchScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          {/* Error message */}
           {error && <Text style={styles.error}>{error}</Text>}
 
-          {/* Search Results */}
           <FlatList
             data={searchResults}
             renderItem={renderItem}

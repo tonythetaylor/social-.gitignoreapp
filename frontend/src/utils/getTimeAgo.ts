@@ -1,6 +1,3 @@
-import React from "react";
-import { Text, StyleSheet } from "react-native";
-
 export const getTimeAgo = (timestamp: string) => {
   const now = new Date() as any;
   const createdAt = new Date(timestamp) as any;
