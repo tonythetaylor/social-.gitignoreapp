@@ -38,3 +38,5 @@ yarn-error.log*
 # API keys (if stored locally)
 keys/
 *.env
+
+uploads/
