@@ -19,6 +19,8 @@ model User {
   website                String?
   userID                 String             @unique
   posts                  Post[]
+  likes                  Like[]             // User's likes
+  comments               Comment[]          // User's comments
 
   // Self-relation: many-to-many for mutual friendships
   friends                User[]             @relation("UserFriends")
@@ -44,6 +46,8 @@ model Post {
   createdAt DateTime @default(now())
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
+  likes     Like[]    // Post's likes
+  comments  Comment[] // Post's comments
 }
 
 model FriendRequest {
@@ -84,4 +88,27 @@ model Follow {
   following   User      @relation("UserFollowers", fields: [followingId], references: [id])
 
   @@unique([followerId, followingId])
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId]) // Ensures a user can like a post only once
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  content   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
 }
