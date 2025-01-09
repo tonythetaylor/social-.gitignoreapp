@@ -29,6 +29,7 @@ import {
   archivePost,
   savePost,
 } from "../actions/editPostActions"; // Import the action functions
+import CollapsibleFriendsHeader from "../components/CollapsibleFriendsHeader";
 
 const apiUrl = "http://192.168.1.30:3005";
 
@@ -628,6 +629,12 @@ const FeedScreen = () => {
       style={{ flex: 1 }}
     >
       <View style={styles.container}>
+      <CollapsibleFriendsHeader
+        maxVisible={8}
+        onFriendChange={(updatedFriends: any) => {
+          console.log("Updated Friends:", updatedFriends);
+        }}
+      />
         <FlatList
           data={posts}
           renderItem={renderItem}
