@@ -16,10 +16,15 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
+import { useNavigation } from "@react-navigation/native"; // Navigation hook
+
+import ThemeToggle from "../components/ThemeToggle";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 const apiUrl = "http://192.168.1.30:3005";
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }: any) => {
+
   const [user, setUser] = useState<any>(null);
   const [image, setImage] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -51,6 +56,9 @@ const ProfileScreen = () => {
   const headerHeight = useRef(new Animated.Value(200)).current;
   const [isShrunk, setIsShrunk] = useState(false);
 
+  const navigateToSettings = () => {
+    navigation.navigate("Settings");
+  };
 
   useEffect(() => {
     let errorTimer: NodeJS.Timeout;
@@ -474,6 +482,9 @@ const ProfileScreen = () => {
 
       {/* Profile Header Section */}
       <Animated.View style={[styles.profileHeader, { height: headerHeight }]}>
+      <TouchableOpacity onPress={navigateToSettings} style={styles.settingsIcon}>
+          <Ionicons name="settings-outline" size={24} color="#000" />
+        </TouchableOpacity>
         <View
           style={[
             styles.profileTextContainer,
@@ -976,5 +987,10 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  settingsIcon: {
+    position: "absolute",
+    top: 10,
+    right: 10,
   },
 });

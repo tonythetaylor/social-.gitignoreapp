@@ -30,6 +30,7 @@ import {
   savePost,
 } from "../actions/editPostActions"; // Import the action functions
 import CollapsibleFriendsHeader from "../components/CollapsibleFriendsHeader";
+import { useTheme } from "../providers/ThemeProvider";
 
 const apiUrl = "http://192.168.1.30:3005";
 
@@ -55,6 +56,8 @@ const FeedScreen = () => {
 
   // Get screen height and width
   const { height, width } = Dimensions.get("window");
+
+  const { isDark } = useTheme();
 
   // Cleanup on unmount
   useEffect(() => {
@@ -250,13 +253,13 @@ const FeedScreen = () => {
     const isLiked = item.isLiked; // Assume `isLiked` is sent from the backend
 
     return (
-      <View style={styles.postContainer}>
+      <View style={[styles.postContainer, {backgroundColor: isDark ? '#1c1c1c' : '#ffffff'}]}>
         <View style={styles.header}>
           <Image
             source={{ uri: profileImageUrl }}
             style={styles.profileImage}
           />
-          <Text style={styles.username}>{item.user?.username}</Text>
+          <Text style={[styles.username,{ color: isDark ? '#ffffff' : '#1c1c1c' }]}>{item.user?.username}</Text>
           <TouchableOpacity onPress={() => openPostModal(item)}>
             <Icon name="more-horizontal" size={24} color="#333" />
           </TouchableOpacity>
@@ -272,7 +275,7 @@ const FeedScreen = () => {
 
         <View style={styles.textContainer}>
           <Text
-            style={styles.postContent}
+            style={[styles.postContent,{ color: isDark ? '#ffffff' : '#000000' }]}
             numberOfLines={isExpanded ? undefined : 3} // Set a limit of lines to show, 3 for example, when collapsed
             ellipsizeMode="tail" // Add ellipsis if the text is truncated
           >
@@ -551,7 +554,8 @@ const FeedScreen = () => {
   const renderPostModalActions = () => {
     if (currentUser && selectedPost && currentUser.id === selectedPost.userId) {
       return (
-        <View style={styles.modalActions}>
+        <View style={[styles.modalActions, { backgroundColor: isDark ? '#121212' : '#f7f7f7', // Changes background based on theme
+      }]}>
           <TouchableOpacity
             style={styles.modalActionButton}
             onPress={() => handlePostAction("edit")}
@@ -626,7 +630,10 @@ const FeedScreen = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
+      style={{ flex: 1,
+        backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
+
+      }}
     >
       <View style={styles.container}>
       <CollapsibleFriendsHeader
@@ -815,7 +822,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     // backgroundColor: "#f8f9fa",
-    backgroundColor: "#f7f7f7", // Instagram-like background color
+    // backgroundColor: "#f7f7f7", // Instagram-like background color
   },
   loadingText: {
     textAlign: "center",

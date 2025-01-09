@@ -12,6 +12,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
+import { useTheme, LightTheme, DarkThemeConfig } from "../providers/ThemeProvider";
 
 
 const mockFriends = [
@@ -69,6 +70,7 @@ const CollapsibleFriendsHeader = ({
   const [newFriend, setNewFriend] = useState("");
   const headerHeight = useRef(new Animated.Value(100)).current; // Default header height
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
+  const { isDark } = useTheme();
 
   const toggleHeader = () => {
     const targetHeight = isHeaderExpanded ? 0 : 100;
@@ -121,10 +123,10 @@ const CollapsibleFriendsHeader = ({
   );
 
   return (
-    <SafeAreaView  style={styles.safeArea}>
-      <View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? "#1c1c1c": LightTheme.colors.background }]}>
+    <View style={{ backgroundColor: isDark ? '#1c1c1c' : '#ffffff' }}>
         {/* Collapsible Header */}
-        <Animated.View style={[styles.header, { height: headerHeight }]}>
+        <Animated.View style={[styles.header, { height: headerHeight,  borderColor: isDark ? "#333333": "#fff" }]}>
           <FlatList
             data={friends}
             horizontal
@@ -137,11 +139,11 @@ const CollapsibleFriendsHeader = ({
         </Animated.View>
 
         {/* Toggle Button */}
-        <TouchableOpacity onPress={toggleHeader} style={styles.toggleButton}>
+        <TouchableOpacity onPress={toggleHeader} style={[styles.toggleButton, { backgroundColor: isDark ? '#1c1c1c' : '#ffffff' } ]}>
           <Icon
             name={isHeaderExpanded ? "chevron-up" : "chevron-down"}
             size={24}
-            color="#333"
+            color={isDark ? "#f7f7f7": "#1c1c1c"}
           />
         </TouchableOpacity>
 
@@ -196,14 +198,13 @@ export default CollapsibleFriendsHeader;
 
 const styles = StyleSheet.create({
     safeArea: {
-      backgroundColor: "#fff",
+    //   backgroundColor: "#fff",
     },
     header: {
-      backgroundColor: "#fff",
       padding: 10,
       elevation: 2,
-      borderBottomWidth: 1,
-      borderColor: "#ddd",
+      borderBottomWidth: 0.5,
+    //   borderColor: "#333333",
     },
     friendList: {
       alignItems: "center",

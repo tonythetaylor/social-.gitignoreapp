@@ -17,6 +17,11 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import debounce from "lodash/debounce";
 import { BlurView } from "expo-blur";
+import {
+  useTheme,
+  LightTheme,
+  DarkThemeConfig,
+} from "../providers/ThemeProvider";
 
 const SearchScreen = ({ navigation }: any) => {
   const [query, setQuery] = useState("");
@@ -28,6 +33,7 @@ const SearchScreen = ({ navigation }: any) => {
 
   const [isCallEnabled, setIsCallEnabled] = useState(true);
   const [isMessageEnabled, setIsMessageEnabled] = useState(true);
+  const { isDark } = useTheme();
 
   // Debounced search function
   const handleSearch = debounce(async () => {
@@ -124,28 +130,28 @@ const SearchScreen = ({ navigation }: any) => {
 
   const handleSendFriendRequest = async (selectedUserID: any) => {
     const token = await SecureStore.getItemAsync("authToken");
-  
+
     if (!token) {
       setError("No authentication token found");
       return;
     }
-  
-    console.log('selectedUserID -> ', selectedUserID);
-  
+
+    console.log("selectedUserID -> ", selectedUserID);
+
     if (!selectedUserID) {
       setError("No user selected");
       return;
     }
-  
+
     // Check if the user is already friends
     const isAlreadyFriends = await checkIfAlreadyFriends(selectedUserID);
-  
+
     // If already friends, stop further execution
     if (isAlreadyFriends) {
       alert("You are already friends with this user.");
       return;
     }
-  
+
     // Proceed with sending the friend request if they are not friends yet
     try {
       const response = await axios.post(
@@ -209,7 +215,9 @@ const SearchScreen = ({ navigation }: any) => {
                 <View style={styles.userCardHeader}>
                   <Image
                     source={{
-                      uri: item.profilePicture || "https://via.placeholder.com/150",
+                      uri:
+                        item.profilePicture ||
+                        "https://via.placeholder.com/150",
                     }}
                     style={styles.modalProfileImage}
                   />
@@ -235,12 +243,16 @@ const SearchScreen = ({ navigation }: any) => {
                     onPress={toggleMessageFeature}
                   >
                     <Icon
-                      name={isMessageEnabled ? "message-circle" : "message-square"}
+                      name={
+                        isMessageEnabled ? "message-circle" : "message-square"
+                      }
                       size={24}
                       color={isMessageEnabled ? "#2196F3" : "#B0B0B0"}
                     />
                     <Text style={styles.toggleText}>
-                      {isMessageEnabled ? "Message Enabled" : "Message Disabled"}
+                      {isMessageEnabled
+                        ? "Message Enabled"
+                        : "Message Disabled"}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -273,17 +285,27 @@ const SearchScreen = ({ navigation }: any) => {
   );
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
+    <KeyboardAvoidingView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#1c1c1c" : LightTheme.colors.background },
+      ]}
+      behavior="padding"
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.innerContainer}>
           <View style={styles.searchContainer}>
             <TextInput
-              style={styles.searchInput}
+              style={[
+                styles.searchInput,
+                { color: isDark ? "#ffffff" : "#000000" }, // Dynamic text color
+              ]}
               placeholder="Search by userID or username"
               value={query}
               onChangeText={handleQueryChange}
               onSubmitEditing={handleSearchSubmit}
               returnKeyType="search"
+              placeholderTextColor={isDark ? "#aaaaaa" : "#888888"} // Dynamic placeholder color
             />
 
             <TouchableOpacity
