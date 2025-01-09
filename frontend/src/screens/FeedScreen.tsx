@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -14,20 +14,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  ScrollView,
   Dimensions,
+  SafeAreaView,
 } from "react-native";
+import { Audio } from "expo-av";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import Icon from "react-native-vector-icons/Feather"; // Import icons
+import { getTimeAgo } from "../utils/getTimeAgo";
+import { getUserInfoFromToken } from "../utils/getUserFromToken";
 import {
   editPost,
   deletePost,
   archivePost,
   savePost,
 } from "../actions/editPostActions"; // Import the action functions
-import axios from "axios";
-import * as SecureStore from "expo-secure-store";
-import Icon from "react-native-vector-icons/Feather"; // Import icons
-import { getTimeAgo } from "../utils/getTimeAgo";
-import { getUserInfoFromToken } from "../utils/getUserFromToken";
 
 const apiUrl = "http://192.168.1.30:3005";
 
@@ -46,9 +47,22 @@ const FeedScreen = () => {
   const [modalOffset] = useState(new Animated.Value(0)); // Modal position adjustment
   const [isExpanded, setIsExpanded] = useState(false);
   const [user, setUser] = useState({ username: "", profilePicture: "" });
+  const [currentAudio, setCurrentAudio] = useState<string | null>(null); // Currently playing audio URL
+  const soundRef = useRef<Audio.Sound | null>(null); // Reference to audio sound
+  const [audioDuration, setAudioDuration] = useState<number | null>(null); // Total duration in milliseconds
+  const [isPlaying, setIsPlaying] = useState<boolean>(false); // Track playback state
 
   // Get screen height and width
   const { height, width } = Dimensions.get("window");
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
 
   const toggleText = () => {
     setIsExpanded(!isExpanded);
@@ -66,43 +80,33 @@ const FeedScreen = () => {
   }, []);
 
   // Fetch posts from the server
+  // Fetch posts
   const fetchPosts = async (page: number) => {
     try {
       const token = await SecureStore.getItemAsync("authToken");
       if (!token) {
         throw new Error("No token found");
       }
-
-      const tokenData = JSON.parse(atob(token.split(".")[1])); // Decode JWT token
-      const expiryTime = tokenData.exp * 1000; // Convert exp to milliseconds
-      const currentTime = Date.now();
-
-      if (currentTime > expiryTime) {
-        console.log("Session expired, please log in again");
-        return;
-      }
-
-      const response = await axios.get(`${apiUrl}/posts?page=${page}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (
-        response.data &&
-        response.data.posts &&
-        response.data.posts.length > 0
-      ) {
-        if (page === 1) {
-          setPosts(response.data.posts);
-        } else {
-          setPosts((prevPosts) => [...prevPosts, ...response.data.posts]);
+  
+      // Fetch paginated posts
+      const response = await axios.get(
+        `${apiUrl}/posts?page=${page}&limit=10`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
-        setTotalPosts(response.data.totalPosts);
+      );
+  
+      const { posts: newPosts, total } = response.data;
+  
+      if (page === 1) {
+        // Reset posts if it's the first page
+        setPosts(newPosts);
       } else {
-        console.log("No posts found");
+        // Append new posts
+        setPosts((prevPosts) => [...prevPosts, ...newPosts]);
       }
-
+  
+      setTotalPosts(total); // Update total posts from the API
       setLoading(false);
       setRefreshing(false);
     } catch (error) {
@@ -151,7 +155,6 @@ const FeedScreen = () => {
     const token = await SecureStore.getItemAsync("authToken");
     if (token) {
       const tokenData = JSON.parse(atob(token.split(".")[1]));
-      console.log(tokenData);
 
       setCurrentUser(tokenData); // Set the current user
     }
@@ -167,16 +170,83 @@ const FeedScreen = () => {
   };
 
   const handleLoadMore = () => {
-    if (!loading && posts.length < totalPosts) {
-      setPage((prevPage) => prevPage + 1);
+    // Prevent fetching more posts if already loading or all posts are loaded
+    if (loading || posts.length >= totalPosts) return;
+  
+    setLoading(true); // Set loading state
+    setPage((prevPage) => prevPage + 1); // Increment page number
+  };
+  
+  useEffect(() => {
+    fetchPosts(page);
+  }, [page]);
+
+  // Play or stop audio
+  const playAudio = async (audioUrl: string) => {
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      playThroughEarpieceAndroid: false,
+    });
+
+    try {
+      if (currentAudio === audioUrl) {
+        if (isPlaying) {
+          // Pause the audio if it's currently playing
+          await soundRef.current?.pauseAsync();
+          setIsPlaying(false);
+        } else {
+          // Resume playback if paused
+          await soundRef.current?.playAsync();
+          setIsPlaying(true);
+        }
+      } else {
+        if (soundRef.current) {
+          await soundRef.current.unloadAsync(); // Unload the previous sound
+        }
+
+        const { sound, status } = await Audio.Sound.createAsync(
+          { uri: audioUrl },
+          { shouldPlay: true } // Automatically play after loading
+        );
+
+        soundRef.current = sound;
+        setCurrentAudio(audioUrl);
+        setIsPlaying(true);
+
+        // Retrieve and set the audio duration if loaded
+        if (status.isLoaded) {
+          const duration = status.durationMillis || null;
+          setAudioDuration(duration);
+        } else {
+          console.error("Audio not loaded");
+        }
+
+        // Add playback status update listener
+        sound.setOnPlaybackStatusUpdate((playbackStatus) => {
+          if (playbackStatus.isLoaded) {
+            if (playbackStatus.didJustFinish) {
+              // Playback finished
+              setIsPlaying(false);
+              setCurrentAudio(null);
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error playing audio:", error);
     }
   };
 
   const renderItem = ({ item }: { item: any }) => {
+    const audioUrl = item.audioUrl ? `${apiUrl}${item.audioUrl}` : null;
     const imageUrl = item.imageUrl ? `${apiUrl}${item.imageUrl}` : null;
     const profileImageUrl = item.user?.profilePicture
-      ? `${item.user.profilePicture}`
+      ? `${item.user.profilePicture}` // Ensure full URL
       : "https://via.placeholder.com/150"; // Profile image URL
+
+    // Check if current user liked the post
+    const isLiked = item.isLiked; // Assume `isLiked` is sent from the backend
 
     return (
       <View style={styles.postContainer}>
@@ -208,6 +278,32 @@ const FeedScreen = () => {
             {item.content}
           </Text>
         </View>
+
+        {audioUrl && (
+          <View style={styles.audioContainer}>
+            <TouchableOpacity
+              onPress={() => playAudio(audioUrl)}
+              style={styles.audioButton}
+            >
+              <Icon
+                name={
+                  currentAudio === audioUrl && isPlaying
+                    ? "pause-circle"
+                    : "play-circle"
+                }
+                size={36}
+                color="#007bff"
+              />
+            </TouchableOpacity>
+            <Text style={styles.audioLabel}>Audio Post</Text>
+            {audioDuration && (
+              <Text style={styles.audioDuration}>
+                Duration: {(audioDuration / 1000).toFixed(2)}s
+              </Text>
+            )}
+          </View>
+        )}
+
         {item.content.length > 100 && (
           // Show "Show More" button only if the content length is greater than a threshold
           <TouchableOpacity onPress={toggleText}>
@@ -219,21 +315,191 @@ const FeedScreen = () => {
         <Text style={styles.timestamp}>{getTimeAgo(item.createdAt)}</Text>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Icon name="thumbs-up" size={24} color="blue" />
+          {/* Like Button */}
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => toggleLike(item.id)}
+          >
+            <Icon
+              name={"thumbs-up"}
+              size={24}
+              color={isLiked ? "blue" : "#333"}
+            />
+            <Text style={styles.actionCount}>{item.likeCount}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+
+          {/* Comment Button */}
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => openCommentsModal(item)}
+          >
             <Icon name="message-circle" size={24} color="green" />
+            <Text style={styles.actionCount}>{item.commentCount}</Text>
           </TouchableOpacity>
+
+          {/* Refresh/Repost Button */}
           <TouchableOpacity style={styles.iconButton}>
             <Icon name="refresh-ccw" size={24} color="orange" />
           </TouchableOpacity>
+
+          {/* Share Button */}
           <TouchableOpacity style={styles.iconButton}>
             <Icon name="share" size={24} color="purple" />
           </TouchableOpacity>
         </View>
       </View>
     );
+  };
+
+  // Function to toggle like/unlike
+  const toggleLike = async (postId: number) => {
+    try {
+      const token = await SecureStore.getItemAsync("authToken");
+      if (!token) {
+        alert("Unauthorized");
+        return;
+      }
+
+      // Find the post
+      const postIndex = posts.findIndex((post) => post.id === postId);
+      if (postIndex === -1) return;
+
+      const post = posts[postIndex];
+
+      if (post.isLiked) {
+        // Unlike the post
+        await axios.delete(`${apiUrl}/posts/${postId}/unlike`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Update state
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex].isLiked = false;
+        updatedPosts[postIndex].likeCount -= 1;
+        setPosts(updatedPosts);
+      } else {
+        // Like the post
+        await axios.post(
+          `${apiUrl}/posts/${postId}/like`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        // Update state
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex].isLiked = true;
+        updatedPosts[postIndex].likeCount += 1;
+        setPosts(updatedPosts);
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      alert("Failed to toggle like.");
+    }
+  };
+
+  // Comments Modal
+  const [commentsModalVisible, setCommentsModalVisible] =
+    useState<boolean>(false);
+  const [selectedPostComments, setSelectedPostComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState<string>("");
+
+  const openCommentsModal = async (post: any) => {
+    setSelectedPost(post);
+    setCommentsModalVisible(true);
+    await fetchComments(post.id);
+  };
+
+  const fetchComments = async (postId: number) => {
+    try {
+      const token = await SecureStore.getItemAsync("authToken");
+      if (!token) {
+        alert("Unauthorized");
+        return;
+      }
+
+      const response = await axios.get(`${apiUrl}/posts/${postId}/comments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setSelectedPostComments(response.data);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      alert("Failed to fetch comments.");
+    }
+  };
+
+  const addCommentToPost = async () => {
+    if (newComment.trim() === "") {
+      alert("Comment cannot be empty.");
+      return;
+    }
+
+    try {
+      const token = await SecureStore.getItemAsync("authToken");
+      if (!token) {
+        alert("Unauthorized");
+        return;
+      }
+
+      const response = await axios.post(
+        `${apiUrl}/posts/${selectedPost.id}/comments`,
+        {
+          content: newComment,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Update comments state
+      setSelectedPostComments([...selectedPostComments, response.data]);
+
+      // Update comment count in posts
+      const postIndex = posts.findIndex((post) => post.id === selectedPost.id);
+      if (postIndex !== -1) {
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex].commentCount += 1;
+        setPosts(updatedPosts);
+      }
+
+      setNewComment("");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      alert("Failed to add comment.");
+    }
+  };
+
+  // Function to delete a comment
+  const deleteCommentFromPost = async (commentId: number) => {
+    try {
+      const token = await SecureStore.getItemAsync("authToken");
+      if (!token) {
+        alert("Unauthorized");
+        return;
+      }
+
+      await axios.delete(`${apiUrl}/comments/${commentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Remove comment from state
+      setSelectedPostComments(
+        selectedPostComments.filter((comment) => comment.id !== commentId)
+      );
+
+      // Update comment count in posts
+      const postIndex = posts.findIndex((post) => post.id === selectedPost.id);
+      if (postIndex !== -1) {
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex].commentCount -= 1;
+        setPosts(updatedPosts);
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      alert("Failed to delete comment.");
+    }
   };
 
   const openPostModal = (post: any) => {
@@ -255,7 +521,19 @@ const FeedScreen = () => {
           setIsEditMode(true); // Set to edit mode
           break;
         case "delete":
-          await deletePost(selectedPost.id);
+          try {
+            await deletePost(selectedPost.id);
+  
+            // Remove the deleted post from the `posts` state
+            setPosts((prevPosts) =>
+              prevPosts.filter((post) => post.id !== selectedPost.id)
+            );
+  
+            closePostModal(); // Close the modal after deletion
+          } catch (error) {
+            console.error("Error deleting post:", error);
+            alert("Failed to delete post.");
+          }
           break;
         case "archive":
           await archivePost(selectedPost.id);
@@ -394,7 +672,7 @@ const FeedScreen = () => {
                     <Icon name="x" size={15} color="#000" />
                   </TouchableOpacity>
 
-                  {/* <Text style={styles.modalTitle}>Post Actions</Text> */}
+                  {/* Post Image */}
                   {selectedPost.imageUrl && (
                     <Image
                       source={{ uri: `${apiUrl}${selectedPost.imageUrl}` }}
@@ -403,7 +681,7 @@ const FeedScreen = () => {
                     />
                   )}
 
-                  {/* <ScrollView contentContainerStyle={{ width: '100%' }}> */}
+                  {/* Edit or View Post Content */}
                   {isEditMode ? (
                     <TextInput
                       style={styles.editTextInput}
@@ -421,8 +699,8 @@ const FeedScreen = () => {
                       {selectedPost.content}
                     </Text>
                   )}
-                  {/* </ScrollView> */}
 
+                  {/* Action Buttons */}
                   {isEditMode ? (
                     <View style={styles.modalActions}>
                       <TouchableOpacity
@@ -446,11 +724,85 @@ const FeedScreen = () => {
             </TouchableWithoutFeedback>
           </Modal>
         )}
+
+        {/* Comments Modal */}
+        {selectedPost && (
+          <Modal
+            visible={commentsModalVisible}
+            animationType="slide"
+            transparent={false}
+            onRequestClose={() => setCommentsModalVisible(false)}
+          >
+            <SafeAreaView style={styles.commentsModalContainer}>
+              <View style={styles.commentsModalContainer}>
+                <View style={styles.commentsHeader}>
+                  <TouchableOpacity
+                    onPress={() => setCommentsModalVisible(false)}
+                  >
+                    <Icon name="arrow-left" size={24} color="#333" />
+                  </TouchableOpacity>
+                  <Text style={styles.commentsTitle}>Comments</Text>
+                </View>
+
+                <FlatList
+                  data={selectedPostComments}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item }) => (
+                    <View style={styles.commentContainer}>
+                      <Image
+                        source={{
+                          uri: item.user?.profilePicture
+                            ? `${item.user.profilePicture}`
+                            : "https://via.placeholder.com/150",
+                        }}
+                        style={styles.commentAvatar}
+                      />
+                      <View style={styles.commentContent}>
+                        <Text style={styles.commentUsername}>
+                          {item.user.username}
+                        </Text>
+                        <Text style={styles.commentText}>{item.content}</Text>
+                        <Text style={styles.commentTimestamp}>
+                          {getTimeAgo(item.createdAt)}
+                        </Text>
+                      </View>
+                      {currentUser && currentUser.id === item.userId && (
+                        <TouchableOpacity
+                          onPress={() => deleteCommentFromPost(item.id)}
+                        >
+                          <Icon name="trash-2" size={20} color="red" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
+                  ListEmptyComponent={
+                    <Text style={styles.loadingText}>No comments yet.</Text>
+                  }
+                />
+
+                <View style={styles.addCommentContainer}>
+                  <TextInput
+                    style={styles.commentInput}
+                    placeholder="Add a comment..."
+                    value={newComment}
+                    onChangeText={setNewComment}
+                  />
+                  <TouchableOpacity onPress={addCommentToPost}>
+                    <Icon name="send" size={24} color="#007bff" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </SafeAreaView>
+          </Modal>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
 };
 
+export default FeedScreen;
+
+// ---------------- STYLES ----------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -503,10 +855,6 @@ const styles = StyleSheet.create({
     alignItems: "center", // Vertically align text and button in the center
     marginBottom: 5,
   },
-  postContentContainer: {
-    alignItems: "center", // Vertically align text and button in the center
-    // marginBottom: 5,
-  },
   postContent: {
     flex: 1, // Take the full width available
     fontSize: 16,
@@ -525,15 +873,19 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "flex-end", // Align all icons to the left
     marginTop: 10,
+    gap: 0, // Add spacing between the icons
   },
   iconButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: "20%",
-    paddingVertical: 10,
-    borderRadius: 8,
+    flexDirection: "row", // Align icon and count horizontally
+    alignItems: "center", // Vertically align icon and count
+    marginRight: 20, // Add spacing between the buttons
+  },
+  actionCount: {
+    fontSize: 12,
+    color: "#333",
+    marginLeft: 5, // Add spacing between the icon and count
   },
   closeModalButton: {
     position: "absolute",
@@ -615,6 +967,84 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
   },
+  commentsModalContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
+  },
+  commentsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  commentsTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+  commentContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 15,
+  },
+  commentAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  commentContent: {
+    flex: 1,
+    backgroundColor: "#f1f0f0",
+    borderRadius: 10,
+    padding: 10,
+  },
+  commentUsername: {
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  commentText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  commentTimestamp: {
+    fontSize: 12,
+    color: "#888",
+    marginTop: 5,
+  },
+  addCommentContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderColor: "#ddd",
+    paddingVertical: 10,
+  },
+  commentInput: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 20,
+    marginRight: 10,
+    backgroundColor: "#f9f9f9",
+  },
+  audioContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  audioButton: {
+    marginRight: 10,
+  },
+  audioLabel: {
+    fontSize: 16,
+    color: "#007bff",
+  },
+  audioDuration: {
+    fontSize: 14,
+    color: "#888",
+    marginLeft: 10,
+  },
 });
 
-export default FeedScreen;

@@ -18,17 +18,17 @@ const storage = multer.diskStorage({
   },
 });
 
-// Accept both images and GIFs
+// Accept both images and GIFs and audio
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const validFileTypes = /jpeg|jpg|png|gif/;
+  const validFileTypes = /jpeg|jpg|png|gif|mp3|wav|m4a/; // Include audio file types
   const extname = validFileTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = validFileTypes.test(file.mimetype);
 
   if (extname && mimetype) {
-    cb(null, true);  // Accept the file
+    cb(null, true);
   } else {
-    const error = new Error('Only image files (JPEG, JPG, PNG, GIF) are allowed');
-    cb(error as any, false);  // Reject the file
+    const error = new Error('Only image, GIF, and audio files are allowed');
+    cb(error as any, false);
   }
 };
 

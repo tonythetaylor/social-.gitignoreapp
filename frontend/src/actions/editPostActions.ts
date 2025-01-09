@@ -12,8 +12,6 @@ export const editPost = async (postId: string, newContent: string) => {
     return { error: 'No token found' };  // Return an error message if no token
   }
 
-  console.log('editPost: ', postId, newContent);
-
   try {
     const response = await axios.put(
       `${apiUrl}/posts/update/${postId}`,
@@ -57,7 +55,7 @@ export const deletePost = async (postId: string) => {
   }
 
   try {
-    const response = await axios.delete(`${apiUrl}/posts/${postId}`, {
+    const response = await axios.delete(`${apiUrl}/posts/delete/${postId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

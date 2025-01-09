@@ -8,6 +8,9 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import userRoutes from './routes/userRoutes';
 import followRoutes from "./routes/followRoutes";
+import likeRoutes from './routes/likeRoutes';
+import commentRoutes from './routes/commentRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -30,6 +33,9 @@ app.use('/posts', postRoutes);
 app.use('/friends', friendRoutes);
 app.use('/user', userRoutes);
 app.use("/follow", followRoutes);
+app.use('/', likeRoutes);
+app.use('/notifications', notificationRoutes);
+app.use('/', commentRoutes);
 
 
 // Serve static files from the 'uploads' folder

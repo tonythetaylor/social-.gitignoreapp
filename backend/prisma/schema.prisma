@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,6 +19,8 @@ model User {
   posts                  Post[]
   likes                  Like[]             // User's likes
   comments               Comment[]          // User's comments
+  notificationsReceived  Notification[]     @relation("NotificationRecipient") // Notifications for this user
+  notificationsSent      Notification[]     @relation("NotificationSender")    // Notifications created by this user
 
   // Self-relation: many-to-many for mutual friendships
   friends                User[]             @relation("UserFriends")
@@ -43,11 +43,13 @@ model Post {
   id        Int      @id @default(autoincrement())
   content   String?
   imageUrl  String?
+  audioUrl  String?   // New field for audio
   createdAt DateTime @default(now())
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
   likes     Like[]    // Post's likes
   comments  Comment[] // Post's comments
+  notifications        Notification[] // Notifications associated with this post
 }
 
 model FriendRequest {
@@ -97,7 +99,8 @@ model Like {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade) // Cascade delete likes when post is deleted
+
 
   @@unique([userId, postId]) // Ensures a user can like a post only once
 }
@@ -107,8 +110,24 @@ model Comment {
   userId    Int
   postId    Int
   content   String
+  audioUrl  String?   // New field for audio
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade) // Cascade delete comments when post is deleted
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  type      String   // e.g., "like", "comment"
+  message   String   // Notification message
+  postId    Int?     // Related post ID
+  userId    Int      // User receiving the notification
+  senderId  Int      // User who performed the action
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false) // Add the 'read' field with default value false
+
+  post      Post?    @relation(fields: [postId], references: [id])
+  user      User     @relation("NotificationRecipient", fields: [userId], references: [id])  // Recipient
+  sender    User     @relation("NotificationSender", fields: [senderId], references: [id])  // Action performer
 }

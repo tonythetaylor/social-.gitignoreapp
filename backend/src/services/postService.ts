@@ -1,27 +1,32 @@
+// services/postService.ts
 import prisma from '../models/prismaClient';
-import { Post } from '@prisma/client'; // Assuming you're using Prisma's Post model
+import { Post } from '@prisma/client';
 
-// Service method to create a post
-export const createPost = async (userId: number, content: string, imageUrl: string | null): Promise<Post> => {
-  console.log('createPost ', imageUrl)
+export const createPost = async (
+  userId: number,
+  content: string,
+  imageUrl: string | null,
+  audioUrl: string | null
+): Promise<Post> => {
   return await prisma.post.create({
     data: {
-      userId,        // Reference to the user who created the post
-      content,       // Post content
-      imageUrl,      // Image URL (if any)
+      userId,
+      content,
+      imageUrl,
+      audioUrl, // Add audio URL
     },
   });
 };
 
-// Service method to fetch posts with pagination and user data
-export const getPosts = async (page: number, limit: number) => {
-  const offset = (page - 1) * limit;  // Calculate offset based on page and limit
+// Updated getPosts to include likes and comments
+export const getPosts = async (page: number, limit: number, currentUserId: number) => {
+  const offset = (page - 1) * limit;
 
   const posts = await prisma.post.findMany({
-    skip: offset,  // Skip the posts for previous pages
-    take: limit,   // Limit the number of posts per page
+    skip: offset,
+    take: limit,
     orderBy: {
-      createdAt: 'desc',  // Order posts by creation date (newest first)
+      createdAt: 'desc',
     },
     include: {
       user: {
@@ -30,15 +35,33 @@ export const getPosts = async (page: number, limit: number) => {
           profilePicture: true,
         },
       },
+      likes: {
+        select: {
+          id: true, // To count likes
+          userId: true, // To check if current user liked
+        },
+      },
+      comments: {
+        select: {
+          id: true, // To count comments
+        },
+      },
     },
   });
 
-  const totalPosts = await prisma.post.count();  // Count the total number of posts in the database
+  const totalPosts = await prisma.post.count();
 
-  return { posts, totalPosts };  // Return posts and the total number of posts for pagination
+  // Map posts to include likeCount, commentCount, and isLiked
+  const mappedPosts = posts.map(post => ({
+    ...post,
+    likeCount: post.likes.length,
+    commentCount: post.comments.length,
+    isLiked: post.likes.some(like => like.userId === currentUserId),
+  }));
+
+  return { posts: mappedPosts, totalPosts };
 };
 
-// Service method to update a post
 export const updatePost = async (userId: number, postId: number, content: string): Promise<Post | null> => {
   // Find the post by ID
   const post = await prisma.post.findUnique({
@@ -57,4 +80,24 @@ export const updatePost = async (userId: number, postId: number, content: string
       content,  // Update the content
     },
   });
+};
+
+// Service to delete a post
+export const deletePost = async (userId: number, postId: number): Promise<boolean> => {
+  // Find the post by ID
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+  });
+
+  // Check if the post exists and the user is the owner
+  if (!post || post.userId !== userId) {
+    return false; // Post does not exist or user is not the owner
+  }
+
+  // Delete the post
+  await prisma.post.delete({
+    where: { id: postId },
+  });
+
+  return true;
 };

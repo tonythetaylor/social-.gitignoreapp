@@ -66,7 +66,7 @@ const ProfileScreen = () => {
       }
     };
   }, [error]);
-  
+
   // Fetch user data and posts on component mount
   const fetchUserData = async () => {
     try {
@@ -322,7 +322,7 @@ const ProfileScreen = () => {
       formData.append("userId", userId.toString());
 
       const response = await axios.post(
-        `${apiUrl}/follow/update-profile-picture`, // Corrected endpoint
+        `${apiUrl}/user/update-profile-picture`, // Corrected endpoint
         formData,
         {
           headers: {
