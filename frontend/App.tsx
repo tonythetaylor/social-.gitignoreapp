@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { View, Text, Switch, StyleSheet, StatusBar } from "react-native";
+import { StatusBar, Platform } from "react-native";
 import ThemeProvider, { useTheme, LightTheme, DarkThemeConfig } from "./src/providers/ThemeProvider";
 
 // Screens
@@ -27,25 +27,14 @@ const TabNavigator = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
-          let iconName = "";
-          switch (route.name) {
-            case "Feed":
-              iconName = "home";
-              break;
-            case "Search":
-              iconName = "search";
-              break;
-            case "Create":
-              iconName = "add-circle";
-              break;
-            case "Notifications":
-              iconName = "notifications";
-              break;
-            case "Profile":
-              iconName = "person";
-              break;
-          }
-          return <Ionicons name={iconName} size={size} color={color} />;
+          const icons = {
+            Feed: "home",
+            Search: "search",
+            Create: "add-circle",
+            Notifications: "notifications",
+            Profile: "person",
+          } as any;
+          return <Ionicons name={icons[route.name]} size={size} color={color} />;
         },
         tabBarStyle: {
           backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
@@ -53,9 +42,9 @@ const TabNavigator = () => {
         tabBarActiveTintColor: isDark ? "#1f93ff" : "#007bff",
         tabBarInactiveTintColor: isDark ? "#888" : "#888",
         headerStyle: {
-          backgroundColor: isDark ? "#1c1c1c" : "#ffffff", // Header background
+          backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
         },
-        headerTintColor: isDark ? "#ffffff" : "#000000", // Header text and icons
+        headerTintColor: isDark ? "#ffffff" : "#000000",
       })}
     >
       <Tab.Screen name="Feed" component={FeedScreen} />
@@ -75,9 +64,9 @@ const StackNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: isDark ? "#1c1c1c" : "#ffffff", // Header background
+          backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
         },
-        headerTintColor: isDark ? "#ffffff" : "#000000", // Header text and icons
+        headerTintColor: isDark ? "#ffffff" : "#000000",
       }}
     >
       <Stack.Screen name="Login" component={LoginScreen} />
@@ -92,48 +81,22 @@ const StackNavigator = () => {
   );
 };
 
-// Main App
+// Main App Component
 export default function App() {
   const { isDark } = useTheme();
 
+  useEffect(() => {
+    StatusBar.setBarStyle(isDark ? "light-content" : "dark-content", true);
+    if (Platform.OS === "android") {
+      StatusBar.setBackgroundColor(isDark ? "#1c1c1c" : "#ffffff", true);
+    }
+  }, [isDark]);
+
   return (
     <ThemeProvider>
-       <StatusBar
-        barStyle={isDark ? "light-content" : "dark-content"} // Adjust status bar style
-        backgroundColor={isDark ? "#1c1c1c" : "#ffffff"} // Adjust status bar background
-      />
       <NavigationContainer theme={isDark ? DarkThemeConfig : LightTheme}>
         <StackNavigator />
-        {/* <ThemeToggle /> */}
       </NavigationContainer>
     </ThemeProvider>
   );
 }
-
-// Theme Toggle Component
-const ThemeToggle = () => {
-  const { isDark, toggleTheme } = useTheme();
-
-  return (
-    <View style={styles.themeToggle}>
-      <Text style={{ color: isDark ? "#fff" : "#000", marginRight: 10 }}>
-        {isDark ? "Dark Mode" : "Light Mode"}
-      </Text>
-      <Switch value={isDark} onValueChange={toggleTheme} />
-    </View>
-  );
-};
-
-// Styles
-const styles = StyleSheet.create({
-  themeToggle: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    backgroundColor: "rgba(0,0,0,0.2)",
-    borderRadius: 50,
-  },
-});

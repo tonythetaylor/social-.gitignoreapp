@@ -13,12 +13,14 @@ import Icon from "react-native-vector-icons/Feather";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { getTimeAgo } from "../utils/getTimeAgo";
+import { useTheme } from "../providers/ThemeProvider";
 
 const NotificationScreen = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
+  const { isDark } = useTheme();
   const backendUrl = "http://192.168.1.30:3005";
 
   // Fetch notifications and friend requests
@@ -98,10 +100,15 @@ const NotificationScreen = () => {
       );
   
     return (
-      <View style={styles.notificationContainer}>
+      <View style={[styles.notificationContainer, {
+         backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
+         shadowColor: isDark  ? "#fff": "#000",
+         borderColor: isDark  ? "#fff": "#fff",
+         borderWidth: isDark ? 0.5 : 0
+         }]}>
         {icon}
         <View style={styles.notificationDetails}>
-          <Text style={styles.notificationText}>{item.message}</Text>
+          <Text style={[styles.notificationText, {color: isDark ? '#fff' : "#333"}]}>{item.message}</Text>
           <Text style={styles.notificationTime}>
             {getTimeAgo(item.createdAt || item.timestamp)}
           </Text>
@@ -129,7 +136,9 @@ const NotificationScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {
+      backgroundColor: isDark ? "#1c1c1c" : "#ffffff"
+      }]}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlatList
         data={notifications}

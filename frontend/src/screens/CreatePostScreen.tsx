@@ -23,6 +23,7 @@ import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityI
 import { useGiphySearch } from "../hooks/useGiphySearch";
 import VoiceRecorder from "../components/VoiceRecorder"; // Import VoiceRecorder
 import { Audio } from "expo-av";
+import { useTheme } from "../providers/ThemeProvider";
 
 const apiUrl = process.env.REACT_APP_API_URL || "http://192.168.1.30:3005";
 
@@ -36,6 +37,7 @@ const CreatePostScreen = ({ navigation }: any) => {
   const [isRecordingModalVisible, setIsRecordingModalVisible] = useState(false);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const { isDark } = useTheme();
 
   const { searchQuery, setSearchQuery, gifResults, isLoading, searchGifs } =
     useGiphySearch();
@@ -99,12 +101,12 @@ const CreatePostScreen = ({ navigation }: any) => {
 
   const handlePlayAudio = async () => {
     if (!audioUri) return;
-  
+
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
     });
-  
+
     try {
       // If already playing, stop the existing playback
       if (sound) {
@@ -113,7 +115,7 @@ const CreatePostScreen = ({ navigation }: any) => {
         setSound(null);
         setIsPlaying(false);
       }
-  
+
       // Create a new playback instance
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri: audioUri },
@@ -121,7 +123,7 @@ const CreatePostScreen = ({ navigation }: any) => {
       );
       setSound(newSound);
       setIsPlaying(true);
-  
+
       newSound.setOnPlaybackStatusUpdate((status) => {
         if (status.isLoaded && status.didJustFinish) {
           setIsPlaying(false);
@@ -159,16 +161,16 @@ const CreatePostScreen = ({ navigation }: any) => {
       setError("Post content or media cannot be empty");
       return;
     }
-  
+
     const token = await SecureStore.getItemAsync("authToken");
     if (!token) {
       setError("You must be logged in to create a post.");
       return;
     }
-  
+
     const formData = new FormData();
     formData.append("content", content);
-  
+
     // Add image to FormData
     if (image) {
       const imageFile = {
@@ -178,7 +180,7 @@ const CreatePostScreen = ({ navigation }: any) => {
       };
       formData.append("image", imageFile as any);
     }
-  
+
     // Add GIF URL to FormData
     if (selectedGif) {
       const gifFile = {
@@ -197,7 +199,7 @@ const CreatePostScreen = ({ navigation }: any) => {
       };
       formData.append("audio", audioFile as any);
     }
-  
+
     try {
       const response = await axios.post(`${apiUrl}/posts/create`, formData, {
         headers: {
@@ -205,7 +207,7 @@ const CreatePostScreen = ({ navigation }: any) => {
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       if (response.status === 201) {
         // Successfully created post
         clearAllFields();
@@ -221,7 +223,12 @@ const CreatePostScreen = ({ navigation }: any) => {
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: isDark ? "#1c1c1c" : "#ffffff" },
+        ]}
+      >
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
@@ -232,18 +239,22 @@ const CreatePostScreen = ({ navigation }: any) => {
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={clearAllFields}>
-            <Icon name="x" size={24} color="#000" />
+            <Icon name="x" size={24} color={isDark ? "#fff" : "#1c1c1c"} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.inputContainer}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { 
+              backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
+              color: isDark ? "#fff" : "#000",
+          }]}
             placeholder="What's on your mind?"
             value={content}
             onChangeText={setContent}
             multiline
             maxLength={280}
+            placeholderTextColor={isDark ? "#aaaaaa" : "#888888"} // Dynamic placeholder color
           />
         </View>
 
@@ -278,15 +289,15 @@ const CreatePostScreen = ({ navigation }: any) => {
         )}
 
         <View style={styles.mediaButtonsContainer}>
-          <TouchableOpacity onPress={pickImage} style={styles.mediaButton}>
+          <TouchableOpacity onPress={pickImage} style={[styles.mediaButton, { backgroundColor: isDark ? "#1c1c1c" : "#ffffff"}]}>
             <Icon name="image" size={24} color="#007bff" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={takePhoto} style={styles.mediaButton}>
+          <TouchableOpacity onPress={takePhoto} style={[styles.mediaButton, { backgroundColor: isDark ? "#1c1c1c" : "#ffffff"}]}>
             <Icon name="camera" size={24} color="#007bff" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setIsGifModalVisible(true)}
-            style={styles.mediaButton}
+            style={[styles.mediaButton, { backgroundColor: isDark ? "#1c1c1c" : "#ffffff"}]}
           >
             <MaterialCommunityIcons
               name="file-gif-box"
@@ -296,7 +307,7 @@ const CreatePostScreen = ({ navigation }: any) => {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setIsRecordingModalVisible(true)}
-            style={styles.mediaButton}
+            style={[styles.mediaButton, { backgroundColor: isDark ? "#1c1c1c" : "#ffffff"}]}
           >
             <Icon name="mic" size={24} color="#007bff" />
           </TouchableOpacity>
@@ -307,7 +318,7 @@ const CreatePostScreen = ({ navigation }: any) => {
             styles.postButton,
             {
               backgroundColor:
-                content || image || selectedGif || audioUri
+                isDark && content || image || selectedGif || audioUri
                   ? "#007bff"
                   : "#ccc",
             },
@@ -324,15 +335,18 @@ const CreatePostScreen = ({ navigation }: any) => {
           transparent={true}
         >
           <TouchableWithoutFeedback>
-            <SafeAreaView style={styles.fullScreenModal}>
+            <SafeAreaView style={[styles.fullScreenModal, { backgroundColor: isDark ? "#1c1c1c" : "#ffffff"}]}>
               <TouchableOpacity
                 style={styles.closeModalButton}
                 onPress={() => setIsGifModalVisible(false)}
               >
-                <Icon name="x" size={24} color="#000" />
+                <Icon name="x" size={24} color={isDark ? "#fff" : "#1c1c1c"} />
               </TouchableOpacity>
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { 
+                  backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
+                  color: isDark ? "#fff" : "#000",
+              }]}
                 placeholder="Search for a GIF"
                 value={searchQuery}
                 onChangeText={(text) => {
@@ -340,6 +354,7 @@ const CreatePostScreen = ({ navigation }: any) => {
                   searchGifs(text);
                 }}
                 autoFocus
+                placeholderTextColor={isDark ? "#aaaaaa" : "#888888"} // Dynamic placeholder color
               />
               {isLoading ? (
                 <View style={styles.centeredContainer}>
@@ -377,13 +392,13 @@ const CreatePostScreen = ({ navigation }: any) => {
           animationType="fade"
           transparent={true}
         >
-          <View style={styles.centeredModal}>
-            <View style={styles.recordingModalContent}>
+          <View style={[styles.centeredModal]}>
+            <View style={[styles.recordingModalContent, { backgroundColor: isDark ? '#1c1c1c' : '#ffffff' }]}>
               <TouchableOpacity
                 style={styles.closeModalButton}
                 onPress={() => setIsRecordingModalVisible(false)}
               >
-                <Icon name="x" size={24} color="#000" />
+              <Icon name="x" size={24} color={isDark ? '#fff' : '#1c1c1c'} />
               </TouchableOpacity>
               <VoiceRecorder onRecordingComplete={handleRecordingComplete} />
             </View>
@@ -419,7 +434,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 12,
     padding: 10,
-    backgroundColor: "#f9f9f9",
+    // backgroundColor: "#f9f9f9",
   },
   previewContainer: {
     marginBottom: 20,
@@ -515,4 +530,3 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
-

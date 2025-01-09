@@ -108,7 +108,7 @@ const CollapsibleFriendsHeader = ({
         }}
         style={styles.friendImage}
       />
-      <Text style={styles.friendName}>{item.username}</Text>
+       {/* <Text style={styles.friendName}>{item.username}</Text>  TODO: decide on adding usernames  */}
     </TouchableOpacity>
   );
 

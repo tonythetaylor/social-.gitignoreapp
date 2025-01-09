@@ -16,15 +16,13 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
-import { useNavigation } from "@react-navigation/native"; // Navigation hook
 
-import ThemeToggle from "../components/ThemeToggle";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { useTheme } from "../providers/ThemeProvider";
 
 const apiUrl = "http://192.168.1.30:3005";
 
 const ProfileScreen = ({ navigation }: any) => {
-
   const [user, setUser] = useState<any>(null);
   const [image, setImage] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -33,7 +31,9 @@ const ProfileScreen = ({ navigation }: any) => {
 
   // For the Followers/Following/Pending modal
   const [followersModalVisible, setFollowersModalVisible] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<"followers" | "following" | "pending">("followers");
+  const [selectedTab, setSelectedTab] = useState<
+    "followers" | "following" | "pending"
+  >("followers");
 
   // Data arrays for each tab
   const [followers, setFollowers] = useState<any[]>([]);
@@ -55,6 +55,7 @@ const ProfileScreen = ({ navigation }: any) => {
   // Animated header height
   const headerHeight = useRef(new Animated.Value(200)).current;
   const [isShrunk, setIsShrunk] = useState(false);
+  const { isDark } = useTheme();
 
   const navigateToSettings = () => {
     navigation.navigate("Settings");
@@ -137,7 +138,7 @@ const ProfileScreen = ({ navigation }: any) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-       console.log(followersResponse.data)
+      console.log(followersResponse.data);
       setFollowers(followersResponse.data);
       console.log("Followers Data:", followersResponse.data); // Debugging log
       setLoadingFollowers(false);
@@ -247,7 +248,10 @@ const ProfileScreen = ({ navigation }: any) => {
   };
 
   // Handle pending actions (accept/reject)
-  const handlePendingAction = async (followId: number, action: "accept" | "reject") => {
+  const handlePendingAction = async (
+    followId: number,
+    action: "accept" | "reject"
+  ) => {
     try {
       setError("");
       const token = await SecureStore.getItemAsync("authToken");
@@ -403,15 +407,24 @@ const ProfileScreen = ({ navigation }: any) => {
     if (selectedTab === "followers") {
       // "Followers" are users who follow the current user.
       // Show "Follow Back" if not already following them
-      const isAlreadyFollowing = following.some((f) => f.following.id === item.id);
-      console.log('following: ', item.id)
+      const isAlreadyFollowing = following.some(
+        (f) => f.following.id === item.id
+      );
+      console.log("following: ", item.id);
       // Debugging: Log comparison results
-      console.log(`Checking if already following user ID ${item.id}:`, isAlreadyFollowing);
-  
+      console.log(
+        `Checking if already following user ID ${item.id}:`,
+        isAlreadyFollowing
+      );
+
       return (
         <View style={styles.userRow}>
           <Image
-            source={{ uri: item.follower.profilePicture || "https://via.placeholder.com/50" }}
+            source={{
+              uri:
+                item.follower.profilePicture ||
+                "https://via.placeholder.com/50",
+            }}
             style={styles.userAvatar}
           />
           <Text style={styles.userText}>{item.follower.username}</Text>
@@ -427,11 +440,14 @@ const ProfileScreen = ({ navigation }: any) => {
       );
     } else if (selectedTab === "following") {
       // "Following" are users the current user is following.
-      console.log(item.id)
       return (
         <View style={styles.userRow}>
           <Image
-            source={{ uri: item.following.profilePicture || "https://via.placeholder.com/50" }}
+            source={{
+              uri:
+                item.following.profilePicture ||
+                "https://via.placeholder.com/50",
+            }}
             style={styles.userAvatar}
           />
           <Text style={styles.userText}>{item.following.username}</Text>
@@ -448,7 +464,11 @@ const ProfileScreen = ({ navigation }: any) => {
       return (
         <View style={styles.userRow}>
           <Image
-            source={{ uri: item.follower.profilePicture || "https://via.placeholder.com/50" }}
+            source={{
+              uri:
+                item.follower.profilePicture ||
+                "https://via.placeholder.com/50",
+            }}
             style={styles.userAvatar}
           />
           <Text style={styles.userText}>{item.follower.username}</Text>
@@ -472,7 +492,12 @@ const ProfileScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#1c1c1c" : "#ffffff" },
+      ]}
+    >
       {/* Error Message */}
       {error ? (
         <View style={styles.errorContainer}>
@@ -481,9 +506,24 @@ const ProfileScreen = ({ navigation }: any) => {
       ) : null}
 
       {/* Profile Header Section */}
-      <Animated.View style={[styles.profileHeader, { height: headerHeight }]}>
-      <TouchableOpacity onPress={navigateToSettings} style={styles.settingsIcon}>
-          <Ionicons name="settings-outline" size={24} color="#000" />
+      <Animated.View
+        style={[
+          styles.profileHeader,
+          {
+            height: headerHeight,
+            backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={navigateToSettings}
+          style={styles.settingsIcon}
+        >
+          <Ionicons
+            name="settings-outline"
+            size={24}
+            color={isDark ? "#fff" : "#1c1c1c"}
+          />
         </TouchableOpacity>
         <View
           style={[
@@ -510,7 +550,13 @@ const ProfileScreen = ({ navigation }: any) => {
               isShrunk && styles.userInfoContainerShrunk,
             ]}
           >
-            <Text style={[styles.username, isShrunk && styles.usernameShrunk]}>
+            <Text
+              style={[
+                styles.username,
+                isShrunk && styles.usernameShrunk,
+                { color: isDark ? "#fff" : "#1c1c1c" },
+              ]}
+            >
               {user?.username}
             </Text>
 
@@ -520,13 +566,17 @@ const ProfileScreen = ({ navigation }: any) => {
                 isShrunk && styles.statsContainerShrunk,
               ]}
             >
-              <Text style={styles.stats}>
+              <Text
+                style={[styles.stats, { color: isDark ? "#fff" : "#1c1c1c" }]}
+              >
                 Posts: {posts.length}
               </Text>
 
               {/* Make this clickable: open modal with three tabs */}
               <TouchableOpacity onPress={openFollowersModal}>
-                <Text style={styles.stats}>
+                <Text
+                  style={[styles.stats, { color: isDark ? "#fff" : "#1c1c1c" }]}
+                >
                   Follows: {getActualFriendCount()}
                 </Text>
               </TouchableOpacity>
@@ -534,16 +584,15 @@ const ProfileScreen = ({ navigation }: any) => {
 
             {/* Bio Section */}
             <View
-              style={[styles.bioContainer, isShrunk && styles.bioContainerShrunk]}
+              style={[
+                styles.bioContainer,
+                isShrunk && styles.bioContainerShrunk,
+              ]}
             >
               <Text style={styles.bio}>{user?.bio || "No bio available"}</Text>
               {!isShrunk && user?.website ? (
-                <TouchableOpacity
-                  onPress={() => Linking.openURL(user.website)}
-                >
-                  <Text style={styles.website}>
-                    {user.website}
-                  </Text>
+                <TouchableOpacity onPress={() => Linking.openURL(user.website)}>
+                  <Text style={styles.website}>{user.website}</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -560,7 +609,9 @@ const ProfileScreen = ({ navigation }: any) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        ListEmptyComponent={<Text style={styles.emptyListText}>No posts available.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.emptyListText}>No posts available.</Text>
+        }
         onScroll={handleScroll}
       />
 
@@ -573,7 +624,9 @@ const ProfileScreen = ({ navigation }: any) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalText}>Do you want to upload this image?</Text>
+            <Text style={styles.modalText}>
+              Do you want to upload this image?
+            </Text>
             <Image source={{ uri: image }} style={styles.modalImage} />
             {uploadingImage ? (
               <ActivityIndicator size="large" color="#007bff" />
@@ -604,7 +657,12 @@ const ProfileScreen = ({ navigation }: any) => {
         transparent={false}
         onRequestClose={() => setFollowersModalVisible(false)}
       >
-        <View style={styles.followersModalContainer}>
+        <View
+          style={[
+            styles.followersModalContainer,
+            { backgroundColor: isDark ? "#1c1c1c" : "#fff" },
+          ]}
+        >
           {/* Simple tab buttons */}
           <View style={styles.tabContainer}>
             <TouchableOpacity
