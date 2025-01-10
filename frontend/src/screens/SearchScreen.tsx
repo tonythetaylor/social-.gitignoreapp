@@ -45,7 +45,7 @@ const SearchScreen = ({ navigation }: any) => {
           return;
         }
         const response = await axios.get(
-          `http://192.168.1.30:3005/user/search?searchTerm=${query}`,
+          `http://192.168.1.174:3005/user/search?searchTerm=${query}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -113,7 +113,7 @@ const SearchScreen = ({ navigation }: any) => {
       }
 
       const response = await axios.post(
-        `http://192.168.1.30:3005/friends/checkFriendStatus`,
+        `http://192.168.1.174:3005/friends/checkFriendStatus`,
         { userId: selectedUserID },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -155,7 +155,7 @@ const SearchScreen = ({ navigation }: any) => {
     // Proceed with sending the friend request if they are not friends yet
     try {
       const response = await axios.post(
-        `http://192.168.1.30:3005/friends/sendFriendRequest`,
+        `http://192.168.1.174:3005/friends/sendFriendRequest`,
         { userID: selectedUserID },
         { headers: { Authorization: `Bearer ${token}` } }
       );

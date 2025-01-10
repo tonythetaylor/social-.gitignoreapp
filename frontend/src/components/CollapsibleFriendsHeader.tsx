@@ -19,42 +19,42 @@ const mockFriends = [
   {
     id: 1,
     username: "Alice",
-    profilePicture: "https://via.placeholder.com/150/FF5733",
+    profilePicture: "https://via.placeholder.com/150",
   },
   {
     id: 2,
     username: "Bob",
-    profilePicture: "https://via.placeholder.com/150/33FF57",
+    profilePicture: "https://via.placeholder.com/150",
   },
   {
     id: 3,
     username: "Charlie",
-    profilePicture: "https://via.placeholder.com/150/5733FF",
+    profilePicture: "https://via.placeholder.com/150",
   },
   {
     id: 4,
     username: "Diana",
-    profilePicture: "https://via.placeholder.com/150/FF33A1",
+    profilePicture: "https://via.placeholder.com/150",
   },
   {
     id: 5,
     username: "Edward",
-    profilePicture: "https://via.placeholder.com/150/A1FF33",
+    profilePicture: "https://via.placeholder.com/150",
   },
   {
     id: 6,
     username: "Fiona",
-    profilePicture: "https://via.placeholder.com/150/33A1FF",
+    profilePicture: "https://via.placeholder.com/150",
   },
   {
     id: 7,
     username: "George",
-    profilePicture: "https://via.placeholder.com/150/FFA133",
+    profilePicture: "https://via.placeholder.com/150",
   },
   {
     id: 8,
     username: "Helen",
-    profilePicture: "https://via.placeholder.com/150/33FFA1",
+    profilePicture: "https://via.placeholder.com/150",
   },
 ];
 

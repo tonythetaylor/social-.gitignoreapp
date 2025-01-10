@@ -25,7 +25,7 @@ import VoiceRecorder from "../components/VoiceRecorder"; // Import VoiceRecorder
 import { Audio } from "expo-av";
 import { useTheme } from "../providers/ThemeProvider";
 
-const apiUrl = process.env.REACT_APP_API_URL || "http://192.168.1.30:3005";
+const apiUrl = process.env.REACT_APP_API_URL || "http://192.168.1.174:3005";
 
 const CreatePostScreen = ({ navigation }: any) => {
   const [content, setContent] = useState("");

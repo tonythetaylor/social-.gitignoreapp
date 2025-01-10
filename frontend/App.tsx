@@ -1,10 +1,18 @@
 import React, { useEffect } from "react";
-import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme,
+} from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { StatusBar, Platform } from "react-native";
-import ThemeProvider, { useTheme, LightTheme, DarkThemeConfig } from "./src/providers/ThemeProvider";
+import ThemeProvider, {
+  useTheme,
+  LightTheme,
+  DarkThemeConfig,
+} from "./src/providers/ThemeProvider";
 
 // Screens
 import LoginScreen from "./src/screens/LoginScreen";
@@ -34,7 +42,9 @@ const TabNavigator = () => {
             Notifications: "notifications",
             Profile: "person",
           } as any;
-          return <Ionicons name={icons[route.name]} size={size} color={color} />;
+          return (
+            <Ionicons name={icons[route.name]} size={size} color={color} />
+          );
         },
         tabBarStyle: {
           backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
@@ -69,8 +79,16 @@ const StackNavigator = () => {
         headerTintColor: isDark ? "#ffffff" : "#000000",
       }}
     >
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Signup"
+        component={SignupScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen
         name="Home"

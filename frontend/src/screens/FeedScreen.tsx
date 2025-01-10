@@ -32,7 +32,7 @@ import {
 import CollapsibleFriendsHeader from "../components/CollapsibleFriendsHeader";
 import { useTheme } from "../providers/ThemeProvider";
 
-const apiUrl = "http://192.168.1.30:3005";
+const apiUrl = "http://192.168.1.174:3005";
 
 const FeedScreen = () => {
   const [posts, setPosts] = useState<any[]>([]);
@@ -632,7 +632,6 @@ const FeedScreen = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1,
         backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
-
       }}
     >
       <View style={styles.container}>
