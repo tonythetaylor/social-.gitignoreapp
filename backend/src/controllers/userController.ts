@@ -5,7 +5,7 @@ import { updateProfilePicture, getUserProfileService, searchUsers } from '../ser
 export const updateUserProfilePicture = async (req: Request, res: Response) => {
     const { userId } = req.body; // Retrieve userId from the request body
     console.log(req.body)
-    const filePath = req.file ? `http://192.168.1.30:3005/uploads/${req.file.filename}` : null;
+    const filePath = req.file ? `http://192.168.1.174:3005/uploads/${req.file.filename}` : null;
 
   if (!filePath) {
      res.status(400).json({ error: 'No image file uploaded' });
