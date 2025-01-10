@@ -45,6 +45,6 @@ app.get('/test', (req, res) => {
   res.status(200).json({ message: 'Server is running and test route is working!' });
 });
 
-app.listen(3005, () => {
+app.listen(3005,'0.0.0.0', () => {
   console.log('Server running on port 3005');
 });

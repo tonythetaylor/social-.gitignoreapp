@@ -9,7 +9,9 @@
     "start:test": "NODE_ENV=test node -r dotenv/config dist/server.js",
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "dev-watch": "ts-node-dev --respawn --transpileOnly src/server.ts"
+    "dev-watch": "ts-node-dev --respawn --transpileOnly src/server.ts",
+    "migrate:dev": "prisma migrate dev",
+    "generate": "prisma generate"
   },
   "keywords": [],
   "author": "",
