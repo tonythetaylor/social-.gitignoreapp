@@ -17,16 +17,20 @@ COPY package.json package-lock.json ./
 # Install application dependencies
 RUN npm install
 
+# Copy Prisma schema and migrations
 COPY prisma ./prisma
 
 # Generate Prisma client with the correct binary target
 RUN npx prisma generate
 
-# Copy application files
+# Copy the rest of the application files
 COPY . .
 
-# Build the app
+# Build the application
 RUN npm run build
+
+# Run migrations to ensure the database schema is up-to-date
+RUN npx prisma migrate deploy
 
 # Expose the application port
 EXPOSE 3005

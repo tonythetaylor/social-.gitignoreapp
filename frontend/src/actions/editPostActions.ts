@@ -2,7 +2,7 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 
-const apiUrl = "http://192.168.1.174:3005";  // API URL
+const apiUrl = "https://44.221.106.179";  // API URL
 
 export const editPost = async (postId: string, newContent: string) => {
   const token = await SecureStore.getItemAsync('authToken');

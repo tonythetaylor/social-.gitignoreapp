@@ -4,7 +4,7 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import Icon from "react-native-vector-icons/Feather";
 
-const apiUrl = "http://192.168.1.174:3005";
+const apiUrl = "https://44.221.106.179";
 
 const PostDetailScreen = ({ route, navigation }: any) => {
   const { postId } = route.params; // Get the postId passed from the FeedScreen

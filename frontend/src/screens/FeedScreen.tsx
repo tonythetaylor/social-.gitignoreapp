@@ -31,8 +31,9 @@ import {
 } from "../actions/editPostActions"; // Import the action functions
 import CollapsibleFriendsHeader from "../components/CollapsibleFriendsHeader";
 import { useTheme } from "../providers/ThemeProvider";
+import { getToken } from "../utils/setUserToken";
 
-const apiUrl = "http://192.168.1.174:3005";
+const apiUrl = "https://44.221.106.179";
 
 const FeedScreen = () => {
   const [posts, setPosts] = useState<any[]>([]);
@@ -53,6 +54,7 @@ const FeedScreen = () => {
   const soundRef = useRef<Audio.Sound | null>(null); // Reference to audio sound
   const [audioDuration, setAudioDuration] = useState<number | null>(null); // Total duration in milliseconds
   const [isPlaying, setIsPlaying] = useState<boolean>(false); // Track playback state
+  const [token, setToken] = useState<any>(null);
 
   // Get screen height and width
   const { height, width } = Dimensions.get("window");
@@ -75,6 +77,7 @@ const FeedScreen = () => {
   useEffect(() => {
     const fetchUserInfo = async () => {
       const userInfo = await getUserInfoFromToken();
+
       if (userInfo) {
         setUser(userInfo); // Set the user info to state
       }
@@ -87,11 +90,11 @@ const FeedScreen = () => {
   // Fetch posts
   const fetchPosts = async (page: number) => {
     try {
-      const token = await SecureStore.getItemAsync("authToken");
+      const token = await getToken()
+
       if (!token) {
         throw new Error("No token found");
       }
-  
       // Fetch paginated posts
       const response = await axios.get(
         `${apiUrl}/posts?page=${page}&limit=10`,
@@ -99,9 +102,9 @@ const FeedScreen = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       const { posts: newPosts, total } = response.data;
-  
+
       if (page === 1) {
         // Reset posts if it's the first page
         setPosts(newPosts);
@@ -109,7 +112,7 @@ const FeedScreen = () => {
         // Append new posts
         setPosts((prevPosts) => [...prevPosts, ...newPosts]);
       }
-  
+
       setTotalPosts(total); // Update total posts from the API
       setLoading(false);
       setRefreshing(false);
@@ -156,7 +159,7 @@ const FeedScreen = () => {
   }, [page]);
 
   const fetchCurrentUser = async () => {
-    const token = await SecureStore.getItemAsync("authToken");
+    const token = await getToken()
     if (token) {
       const tokenData = JSON.parse(atob(token.split(".")[1]));
 
@@ -176,11 +179,11 @@ const FeedScreen = () => {
   const handleLoadMore = () => {
     // Prevent fetching more posts if already loading or all posts are loaded
     if (loading || posts.length >= totalPosts) return;
-  
+
     setLoading(true); // Set loading state
     setPage((prevPage) => prevPage + 1); // Increment page number
   };
-  
+
   useEffect(() => {
     fetchPosts(page);
   }, [page]);
@@ -253,13 +256,22 @@ const FeedScreen = () => {
     const isLiked = item.isLiked; // Assume `isLiked` is sent from the backend
 
     return (
-      <View style={[styles.postContainer, {backgroundColor: isDark ? '#1c1c1c' : '#ffffff'}]}>
+      <View
+        style={[
+          styles.postContainer,
+          { backgroundColor: isDark ? "#1c1c1c" : "#ffffff" },
+        ]}
+      >
         <View style={styles.header}>
           <Image
             source={{ uri: profileImageUrl }}
             style={styles.profileImage}
           />
-          <Text style={[styles.username,{ color: isDark ? '#ffffff' : '#1c1c1c' }]}>{item.user?.username}</Text>
+          <Text
+            style={[styles.username, { color: isDark ? "#ffffff" : "#1c1c1c" }]}
+          >
+            {item.user?.username}
+          </Text>
           <TouchableOpacity onPress={() => openPostModal(item)}>
             <Icon name="more-horizontal" size={24} color="#333" />
           </TouchableOpacity>
@@ -275,7 +287,10 @@ const FeedScreen = () => {
 
         <View style={styles.textContainer}>
           <Text
-            style={[styles.postContent,{ color: isDark ? '#ffffff' : '#000000' }]}
+            style={[
+              styles.postContent,
+              { color: isDark ? "#ffffff" : "#000000" },
+            ]}
             numberOfLines={isExpanded ? undefined : 3} // Set a limit of lines to show, 3 for example, when collapsed
             ellipsizeMode="tail" // Add ellipsis if the text is truncated
           >
@@ -358,7 +373,7 @@ const FeedScreen = () => {
   // Function to toggle like/unlike
   const toggleLike = async (postId: number) => {
     try {
-      const token = await SecureStore.getItemAsync("authToken");
+      const token = await getToken()
       if (!token) {
         alert("Unauthorized");
         return;
@@ -417,7 +432,7 @@ const FeedScreen = () => {
 
   const fetchComments = async (postId: number) => {
     try {
-      const token = await SecureStore.getItemAsync("authToken");
+      const token = await getToken()
       if (!token) {
         alert("Unauthorized");
         return;
@@ -441,7 +456,7 @@ const FeedScreen = () => {
     }
 
     try {
-      const token = await SecureStore.getItemAsync("authToken");
+      const token = await getToken()
       if (!token) {
         alert("Unauthorized");
         return;
@@ -478,7 +493,7 @@ const FeedScreen = () => {
   // Function to delete a comment
   const deleteCommentFromPost = async (commentId: number) => {
     try {
-      const token = await SecureStore.getItemAsync("authToken");
+      const token = await getToken()
       if (!token) {
         alert("Unauthorized");
         return;
@@ -527,12 +542,12 @@ const FeedScreen = () => {
         case "delete":
           try {
             await deletePost(selectedPost.id);
-  
+
             // Remove the deleted post from the `posts` state
             setPosts((prevPosts) =>
               prevPosts.filter((post) => post.id !== selectedPost.id)
             );
-  
+
             closePostModal(); // Close the modal after deletion
           } catch (error) {
             console.error("Error deleting post:", error);
@@ -554,8 +569,14 @@ const FeedScreen = () => {
   const renderPostModalActions = () => {
     if (currentUser && selectedPost && currentUser.id === selectedPost.userId) {
       return (
-        <View style={[styles.modalActions, { backgroundColor: isDark ? '#121212' : '#f7f7f7', // Changes background based on theme
-      }]}>
+        <View
+          style={[
+            styles.modalActions,
+            {
+              backgroundColor: isDark ? "#121212" : "#f7f7f7", // Changes background based on theme
+            },
+          ]}
+        >
           <TouchableOpacity
             style={styles.modalActionButton}
             onPress={() => handlePostAction("edit")}
@@ -630,17 +651,15 @@ const FeedScreen = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1,
-        backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
-      }}
+      style={{ flex: 1, backgroundColor: isDark ? "#1c1c1c" : "#ffffff" }}
     >
       <View style={styles.container}>
-      <CollapsibleFriendsHeader
-        maxVisible={8}
-        onFriendChange={(updatedFriends: any) => {
-          console.log("Updated Friends:", updatedFriends);
-        }}
-      />
+        <CollapsibleFriendsHeader
+          maxVisible={8}
+          onFriendChange={(updatedFriends: any) => {
+            console.log("Updated Friends:", updatedFriends);
+          }}
+        />
         <FlatList
           data={posts}
           renderItem={renderItem}
@@ -1060,4 +1079,3 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
 });
-

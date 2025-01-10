@@ -21,7 +21,7 @@ const NotificationScreen = () => {
   const [error, setError] = useState<string>("");
 
   const { isDark } = useTheme();
-  const backendUrl = "http://192.168.1.174:3005";
+  const backendUrl = "https://44.221.106.179";
 
   // Fetch notifications and friend requests
   const fetchData = async () => {
@@ -116,7 +116,7 @@ const NotificationScreen = () => {
         <View style={styles.postPreview}>
           {item.post?.imageUrl ? (
             <Image
-              source={{ uri: `http://192.168.1.174:3005${item.post.imageUrl}` }}
+              source={{ uri: `https://44.221.106.179${item.post.imageUrl}` }}
               style={styles.imagePreview}
             />
           ) : item.post?.audioUrl ? (

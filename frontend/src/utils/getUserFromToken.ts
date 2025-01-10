@@ -1,5 +1,17 @@
 import * as SecureStore from "expo-secure-store";
 
+const isWeb = typeof window !== "undefined";
+
+export const getToken = async () => {
+  if (isWeb) {
+    // Use localStorage for web
+    localStorage.getItemItem("authToken");
+  } else {
+    // Use SecureStore for mobile
+    await SecureStore.getItemAsync("authToken");
+  }
+};
+
 export const getUserInfoFromToken = async () => {
   const token = await SecureStore.getItemAsync("authToken");
 

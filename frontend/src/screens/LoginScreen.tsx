@@ -9,8 +9,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
-
-const apiUrl = process.env.REACT_APP_API_URL;
+import { saveToken } from "../utils/setUserToken";
 
 const LoginScreen = ({ navigation }: any) => {
   // Default email and password for testing
@@ -20,17 +19,25 @@ const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState(defaultEmail); // Set default email
   const [password, setPassword] = useState(defaultPassword); // Set default password
   const [error, setError] = useState("");
- 
+
   const handleLogin = async () => {
     try {
-      const response = await axios.post(`http://192.168.1.174:3005/auth/login`, {
+      const response = await axios.post("https://44.221.106.179/auth/login", {
         email,
         password,
       });
-      await SecureStore.setItemAsync("authToken", response.data.token); // Store token securely
-      navigation.navigate("Home");
-    } catch (err) {
-      setError("Login failed. Please check your credentials.");
+  
+      console.log("Response: ", response.data);
+  
+      if (response.data.token) {
+        await saveToken("authToken", response.data.token); // Save the token securely
+        navigation.navigate("Home");
+      } else {
+        setError("Unexpected server response.");
+      }
+    } catch (err: any) {
+      console.error("Login error: ", err.response?.data || err.message);
+      setError(err.response?.data?.error || "Login failed. Please check your credentials.");
     }
   };
 
@@ -38,7 +45,6 @@ const LoginScreen = ({ navigation }: any) => {
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
 
-      {/* Email input */}
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -48,7 +54,6 @@ const LoginScreen = ({ navigation }: any) => {
         autoCapitalize="none"
       />
 
-      {/* Password input */}
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -58,15 +63,12 @@ const LoginScreen = ({ navigation }: any) => {
         autoCapitalize="none"
       />
 
-      {/* Error message */}
       {error && <Text style={styles.error}>{error}</Text>}
 
-      {/* Login Button */}
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
 
-      {/* Sign up link */}
       <View style={styles.signUpContainer}>
         <Text style={styles.signUpText}>Don't have an account?</Text>
         <TouchableOpacity onPress={() => navigation.navigate("Signup")}>

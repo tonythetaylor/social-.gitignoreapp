@@ -58,7 +58,7 @@ const PostScreen = () => {
 
     try {
       // Send form data to the server
-      const response = await axios.post(`http://192.168.1.174:3005/posts`, formData, {
+      const response = await axios.post(`https://44.221.106.179/posts`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',

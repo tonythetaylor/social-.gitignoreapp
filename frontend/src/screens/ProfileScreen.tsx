@@ -20,7 +20,7 @@ import axios from "axios";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../providers/ThemeProvider";
 
-const apiUrl = "http://192.168.1.174:3005";
+const apiUrl = "https://44.221.106.179";
 
 const ProfileScreen = ({ navigation }: any) => {
   const [user, setUser] = useState<any>(null);

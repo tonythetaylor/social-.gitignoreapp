@@ -24,8 +24,9 @@ import { useGiphySearch } from "../hooks/useGiphySearch";
 import VoiceRecorder from "../components/VoiceRecorder"; // Import VoiceRecorder
 import { Audio } from "expo-av";
 import { useTheme } from "../providers/ThemeProvider";
+import { getToken } from "../utils/setUserToken";
 
-const apiUrl = process.env.REACT_APP_API_URL || "http://192.168.1.174:3005";
+const apiUrl = process.env.REACT_APP_API_URL || "https://44.221.106.179";
 
 const CreatePostScreen = ({ navigation }: any) => {
   const [content, setContent] = useState("");
@@ -162,7 +163,7 @@ const CreatePostScreen = ({ navigation }: any) => {
       return;
     }
 
-    const token = await SecureStore.getItemAsync("authToken");
+    const token = await getToken()
     if (!token) {
       setError("You must be logged in to create a post.");
       return;
