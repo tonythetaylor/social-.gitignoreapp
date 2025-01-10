@@ -21,7 +21,7 @@ const apiUrl = process.env.API_URL;
 
 const app = express();
 const corsOptions = {
-  origin: ['http://localhost:3000', 'exp://192.168.1.174:8081', 'http://192.168.1.55'],  // Add mobile IP here
+  origin: ['http://localhost:3000', 'exp://44.221.106.179:8081', 'http://192.168.1.55'],  // Add mobile IP here
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,  // If you're using cookies or sessions
 };
